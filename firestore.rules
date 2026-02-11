@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -7,22 +8,6 @@ service cloud.firestore {
      * This ruleset implements a strict User-Ownership model designed for "Authorization Independence." 
      * Access control is determined entirely by the hierarchy of the data path (/users/{userId}), 
      * ensuring that users can only interact with their own profile, statistics, and subscription data.
-     *
-     * DATA STRUCTURE
-     * - /users/{userId}: The root user document containing profile and role information.
-     * - /users/{userId}/stats/{statsId}: Subcollection for tracking user activity and "Audit" metrics.
-     * - /users/{userId}/subscriptions/{subscriptionId}: Subcollection for managing Midtrans/Stripe 
-     *   payment states and premium plan access.
-     *
-     * KEY SECURITY DECISIONS
-     * 1. Path-Based Authorization: The {userId} in the path is compared directly against the 
-     *    request.auth.uid to prevent cross-user data access.
-     * 2. Prototyping Flexibility: While ownership is strictly enforced, the schema of non-relational 
-     *    fields (like 'totalLossObserved' or 'planId') is not validated here to allow for rapid UI iteration.
-     * 3. Immutability: Critical identifiers (uid, id) are made immutable during updates to prevent 
-     *    account hijacking or data corruption.
-     * 4. Denormalization for Authorization: Ownership fields are expected to exist on the document 
-     *    data to reinforce the path-based security and allow for future query scaling.
      */
 
     // --- Helper Functions ---
@@ -44,13 +29,6 @@ service cloud.firestore {
 
     // --- Rules ---
 
-    /**
-     * @description Rules for the root user profile. Ensures users can only manage their own account.
-     * @path /users/{userId}
-     * @allow (get) If the user is the owner of the profile.
-     * @deny (list) Public listing of users is strictly prohibited.
-     * @principle Restricts access to a user's own data tree and enforces identity consistency.
-     */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false; 
@@ -58,31 +36,27 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Rules for user-specific activity statistics.
-       * @path /users/{userId}/stats/{statsId}
-       * @allow (create) If the parent path belongs to the authenticated user.
-       * @deny (update) If the user attempts to modify stats belonging to another UID.
-       * @principle Enforces hierarchical ownership for subcollections.
-       */
       match /stats/{statsId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for subscription and payment gateway integration (Midtrans/Stripe).
-       * @path /users/{userId}/subscriptions/{subscriptionId}
-       * @allow (get) The user checking their current premium status or order ID.
-       * @deny (create) If the UID in the path does not match the authenticated session.
-       * @principle Protects sensitive payment and subscription state from external tampering.
-       */
       match /subscriptions/{subscriptionId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Rules for the user's audit history.
+       * @path /users/{userId}/audit_logs/{auditId}
+       */
+      match /audit_logs/{auditId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
       }
     }
 

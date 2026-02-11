@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -136,6 +137,49 @@
         "currentPeriodEnd",
         "midtransOrderId"
       ]
+    },
+    "AuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AuditLog",
+      "type": "object",
+      "description": "A record of an AI-powered audit performed by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who performed the audit."
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "excuse": { "type": "string" },
+            "monthsDelayed": { "type": "number" },
+            "targetIncome": { "type": "number" }
+          },
+          "required": ["excuse", "monthsDelayed", "targetIncome"]
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "diagnosis_title": { "type": "string" },
+            "brutal_diagnosis": { "type": "string" },
+            "opportunity_cost_idr": { "type": "number" },
+            "dark_analogy": { "type": "string" },
+            "strategic_commands": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "type": {
+          "type": "string",
+          "enum": ["standard", "deep_audit"]
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Timestamp when the audit was generated."
+        }
+      },
+      "required": ["userId", "input", "output", "type", "timestamp"]
     }
   },
   "auth": {
@@ -153,7 +197,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information. Includes `uid`, `email`, `name`, `role`, `isPremium`, `statsId`, `subscriptionId`, and `createdAt`.  User data is isolated under their userId for authorization independence.",
+          "description": "Stores user profile information.",
           "params": [
             {
               "name": "userId",
@@ -169,16 +213,10 @@
           "schema": {
             "$ref": "#/backend/entities/UserStats"
           },
-          "description": "Stores user statistics, including `totalAudits`, `totalLossObserved`, `completedCommands`, and `failedCommands`. Stored as a subcollection of `/users/{userId}` to ensure only the user can access their stats.  The `statsId` is used to guarantee unique stats document.",
+          "description": "Stores user statistics.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "statsId",
-              "description": "The unique identifier for the user stats."
-            }
+            { "name": "userId" },
+            { "name": "statsId" }
           ]
         }
       },
@@ -189,20 +227,27 @@
           "schema": {
             "$ref": "#/backend/entities/Subscription"
           },
-          "description": "Stores user subscription information, including `planId`, `status`, `currentPeriodEnd`, and `midtransOrderId`. Stored as a subcollection of `/users/{userId}` to ensure only the user can access their subscription details. The `subscriptionId` guarantees a unique subscription document.",
+          "description": "Stores user subscription information.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "subscriptionId",
-              "description": "The unique identifier for the user subscription."
-            }
+            { "name": "userId" },
+            { "name": "subscriptionId" }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/audit_logs/{auditId}",
+        "definition": {
+          "entityName": "AuditLog",
+          "schema": {
+            "$ref": "#/backend/entities/AuditLog"
+          },
+          "description": "Stores individual audit reports for the user.",
+          "params": [
+            { "name": "userId" },
+            { "name": "auditId" }
           ]
         }
       }
-    ],
-    "reasoning": "This Firestore structure is designed to support the Auditgelap application, focusing on user data, subscription management, and integration with payment gateways like Midtrans/Stripe. The design prioritizes Authorization Independence via denormalization and supports secure list operations (QAPs). User data and related entities (UserStats and Subscription) are structured under the `/users/{userId}` path for clear ownership and simplified security rules. This structure allows for secure and scalable management of user accounts and subscriptions.\n\n**Authorization Independence:** The structure enforces Authorization Independence (CRITICAL). Each user's data (profile, stats, and subscription) is stored under their unique `userId`, avoiding the need for `get()` calls in security rules to validate ownership or access.\n\n**QAPs (Rules are not Filters):**\nThe chosen structure enables secure `list` operations:\n*   Path-Based Ownership (`/users/{userId}`): This inherently secures user data, as rules can easily validate `request.auth.uid == userId` for create, update, and delete operations. Listing user data is generally restricted to the user themselves.\n\n**Invariants:** The design supports data integrity by associating stats and subscription directly with each user, ensuring consistent access to related information."
+    ]
   }
 }
