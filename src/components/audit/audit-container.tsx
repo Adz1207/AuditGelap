@@ -10,11 +10,13 @@ import { Loader2 } from 'lucide-react';
 export function AuditContainer() {
   const [loading, setLoading] = useState(false);
   const [auditData, setAuditData] = useState<AuditOutput | null>(null);
+  const [langUsed, setLangUsed] = useState<'Indonesian' | 'English'>('Indonesian');
   const { toast } = useToast();
 
   const handleAudit = async (situation: string, lang: 'Indonesian' | 'English') => {
     setLoading(true);
     setAuditData(null);
+    setLangUsed(lang);
     try {
       const result = await generateAuditAndInsights({ 
         situationDetails: situation,
@@ -46,7 +48,7 @@ export function AuditContainer() {
         </div>
       )}
 
-      {auditData && <AuditResults data={auditData} />}
+      {auditData && <AuditResults data={auditData} lang={langUsed} />}
     </div>
   );
 }
