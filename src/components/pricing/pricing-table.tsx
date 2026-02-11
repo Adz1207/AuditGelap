@@ -1,13 +1,29 @@
-"use client";
 
-import React from 'react';
-import { Check, X, Shield, Zap, Target } from 'lucide-react';
+"use client"
+
+import React, { useState } from 'react';
+import { Check, X, Shield, Zap, Target, Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { createPaymentTransaction } from '@/app/actions/payment';
+
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
 
 export const PricingTable = () => {
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   const plans = [
     {
+      id: "bystander",
       name: "Bystander",
-      price: "0",
+      price: 0,
+      displayPrice: "0",
       costComparison: "Biaya: Kebocoran Waktu Anda",
       icon: <Target className="text-gray-500" size={20} />,
       features: [
@@ -24,8 +40,10 @@ export const PricingTable = () => {
       featured: false
     },
     {
+      id: "executioner",
       name: "The Executioner",
-      price: "250.000",
+      price: 250000,
+      displayPrice: "250.000",
       costComparison: "Setara 0.5% dari Potensi Kerugian Anda",
       icon: <Zap className="text-red-500" size={20} />,
       features: [
@@ -42,8 +60,10 @@ export const PricingTable = () => {
       featured: true
     },
     {
+      id: "war_room",
       name: "War Room",
-      price: "1.500.000",
+      price: 1500000,
+      displayPrice: "1.500.000",
       costComparison: "Investasi Penyelamatan Aset",
       icon: <Shield className="text-white" size={20} />,
       features: [
@@ -58,6 +78,64 @@ export const PricingTable = () => {
       featured: false
     }
   ];
+
+  const handleSubscribe = async (plan: typeof plans[0]) => {
+    if (plan.price === 0) {
+      window.location.href = '/audit';
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Autentikasi Diperlukan",
+        description: "Anda harus masuk untuk melakukan transaksi.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoadingPlan(plan.id);
+
+    try {
+      const { token } = await createPaymentTransaction({
+        user: {
+          id: user.uid,
+          name: user.displayName || 'User Auditgelap',
+          email: user.email || ''
+        },
+        plan: {
+          id: plan.id,
+          name: plan.name,
+          price: plan.price
+        }
+      });
+
+      if (window.snap) {
+        window.snap.pay(token, {
+          onSuccess: (result: any) => {
+            toast({ title: "Pembayaran Berhasil", description: "Selamat datang di jajaran eksekutor." });
+            window.location.reload();
+          },
+          onPending: (result: any) => {
+            toast({ title: "Menunggu Pembayaran", description: "Segera selesaikan transaksi Anda." });
+          },
+          onError: (result: any) => {
+            toast({ title: "Pembayaran Gagal", description: "Terjadi kesalahan pada sistem pembayaran.", variant: "destructive" });
+          },
+          onClose: () => {
+            setLoadingPlan(null);
+          }
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Kesalahan Sistem",
+        description: "Gagal memproses inisialisasi pembayaran.",
+        variant: "destructive"
+      });
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <section className="bg-black py-24 px-4 font-mono">
@@ -83,7 +161,7 @@ export const PricingTable = () => {
               </div>
 
               <div className="mb-2">
-                <span className="text-4xl font-black text-white italic">Rp {plan.price}</span>
+                <span className="text-4xl font-black text-white italic">Rp {plan.displayPrice}</span>
                 <span className="text-zinc-600 text-[10px] ml-1 uppercase">/Bulan</span>
               </div>
               
@@ -106,12 +184,20 @@ export const PricingTable = () => {
                 ))}
               </div>
 
-              <button className={`w-full py-4 px-6 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 rounded-sm border ${
-                plan.featured 
-                ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 shadow-[0_0_20px_-5px_rgba(220,38,38,0.5)]' 
-                : 'bg-transparent text-white border-zinc-700 hover:border-white hover:bg-white hover:text-black'
-              }`}>
-                {plan.cta}
+              <button 
+                onClick={() => handleSubscribe(plan)}
+                disabled={loadingPlan === plan.id}
+                className={`w-full py-4 px-6 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 rounded-sm border flex items-center justify-center gap-2 ${
+                  plan.featured 
+                  ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 shadow-[0_0_20px_-5px_rgba(220,38,38,0.5)]' 
+                  : 'bg-transparent text-white border-zinc-700 hover:border-white hover:bg-white hover:text-black'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {loadingPlan === plan.id ? (
+                  <Loader2 className="animate-spin w-4 h-4" />
+                ) : (
+                  plan.cta
+                )}
               </button>
             </div>
           ))}

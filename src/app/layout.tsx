@@ -1,5 +1,9 @@
+
 import type {Metadata} from 'next';
+import Script from 'next/script';
 import './globals.css';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'Auditgelap | Realitas Pahit Masa Depan Anda',
@@ -19,8 +23,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@300;400;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background text-foreground overflow-x-hidden">
-        <div className="scan-line" />
-        {children}
+        <FirebaseClientProvider>
+          <div className="scan-line" />
+          {children}
+          <Toaster />
+          {/* Midtrans Snap Script */}
+          <Script 
+            src="https://app.sandbox.midtrans.com/snap/snap.js" 
+            data-client-key={process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-YOUR_KEY"}
+            strategy="lazyOnload"
+          />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
