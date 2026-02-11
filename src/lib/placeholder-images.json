@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "audit-bg",
+      "description": "Dark abstract tech background with red accents",
+      "imageUrl": "https://images.unsplash.com/photo-1632156752304-8b3db7a7bab4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZGFyayUyMHRlY2huaWNhbHxlbnwwfHx8fDE3NzA3OTgwMDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dark technical"
+    }
+  ]
 }
