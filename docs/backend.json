@@ -29,38 +29,25 @@
           "type": "boolean",
           "description": "Indicates active premium status."
         },
+        "premiumSince": {
+          "type": "number",
+          "description": "Timestamp when the user first went premium."
+        },
         "createdAt": {
           "type": "number",
           "description": "Timestamp of account creation."
+        },
+        "subscription": {
+          "type": "object",
+          "properties": {
+            "planId": { "type": "string" },
+            "status": { "type": "string", "enum": ["active", "expired"] },
+            "currentPeriodEnd": { "type": "number" },
+            "midtransOrderId": { "type": "string" }
+          }
         }
       },
       "required": ["uid", "email", "name", "role", "isPremium", "createdAt"]
-    },
-    "UserStats": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserStats",
-      "type": "object",
-      "description": "Statistics related to a user's activity.",
-      "properties": {
-        "totalAudits": { "type": "number" },
-        "totalLossObserved": { "type": "number" },
-        "completedCommands": { "type": "number" },
-        "failedCommands": { "type": "number" }
-      },
-      "required": ["totalAudits", "totalLossObserved", "completedCommands", "failedCommands"]
-    },
-    "Subscription": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Subscription",
-      "type": "object",
-      "description": "Details for premium features.",
-      "properties": {
-        "planId": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "expired"] },
-        "currentPeriodEnd": { "type": "number" },
-        "midtransOrderId": { "type": "string" }
-      },
-      "required": ["planId", "status", "currentPeriodEnd", "midtransOrderId"]
     },
     "AuditLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -116,47 +103,17 @@
     "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": { "$ref": "#/backend/entities/User" },
-          "description": "Stores user profile."
-        }
-      },
-      {
-        "path": "/users/{userId}/stats/{statsId}",
-        "definition": {
-          "entityName": "UserStats",
-          "schema": { "$ref": "#/backend/entities/UserStats" },
-          "description": "User statistics."
-        }
-      },
-      {
-        "path": "/users/{userId}/subscriptions/{subscriptionId}",
-        "definition": {
-          "entityName": "Subscription",
-          "schema": { "$ref": "#/backend/entities/Subscription" },
-          "description": "Subscription details."
-        }
-      },
-      {
-        "path": "/users/{userId}/audit_logs/{auditId}",
-        "definition": {
-          "entityName": "AuditLog",
-          "schema": { "$ref": "#/backend/entities/AuditLog" },
-          "description": "User audit history."
-        }
-      },
-      {
-        "path": "/users/{userId}/active_commands/{commandId}",
-        "definition": {
-          "entityName": "ActiveCommand",
-          "schema": { "$ref": "#/backend/entities/ActiveCommand" },
-          "description": "User active commands."
-        }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "Stores user profile."
+    },
+    "/users/{userId}/audit_logs/{auditId}": {
+      "schema": { "$ref": "#/backend/entities/AuditLog" },
+      "description": "User audit history."
+    },
+    "/users/{userId}/active_commands/{commandId}": {
+      "schema": { "$ref": "#/backend/entities/ActiveCommand" },
+      "description": "User active commands."
+    }
   }
 }

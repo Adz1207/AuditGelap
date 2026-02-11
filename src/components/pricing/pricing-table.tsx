@@ -6,7 +6,7 @@ import { Check, X, Shield, Zap, Target, Loader2 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentTransaction } from '@/app/actions/payment';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -117,28 +117,31 @@ export const PricingTable = () => {
       if (window.snap) {
         window.snap.pay(token, {
           onSuccess: async (result: any) => {
-            // Optimistic update of the user's role in Firestore
+            // Client-side completion logic: Update Firestore role and status
             const userRef = doc(firestore, 'users', user.uid);
-            updateDoc(userRef, {
+            const updateData = {
               role: plan.id,
               isPremium: true,
+              premiumSince: Date.now(),
               subscription: {
                 planId: plan.id,
                 status: 'active',
                 currentPeriodEnd: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
                 midtransOrderId: result.order_id
               }
-            }).catch(async (error) => {
+            };
+
+            updateDoc(userRef, updateData).catch(async () => {
               errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: userRef.path,
                 operation: 'update',
-                requestResourceData: { role: plan.id, isPremium: true }
+                requestResourceData: updateData
               }));
             });
 
             toast({ 
               title: "Pembayaran Berhasil", 
-              description: "Selamat datang di jajaran eksekutor. Status Anda telah diperbarui." 
+              description: `Anda sekarang adalah ${plan.name}. Status telah diperbarui.` 
             });
             
             setTimeout(() => {
@@ -148,14 +151,14 @@ export const PricingTable = () => {
           onPending: (result: any) => {
             toast({ 
               title: "Menunggu Pembayaran", 
-              description: "Segera selesaikan transaksi Anda. Waktu adalah uang." 
+              description: "Selesaikan transaksi Anda segera. Waktu adalah uang." 
             });
             setLoadingPlan(null);
           },
           onError: (result: any) => {
             toast({ 
               title: "Pembayaran Gagal", 
-              description: "Terjadi kesalahan pada sistem pembayaran. Coba lagi.", 
+              description: "Transaksi ditolak. Jangan biarkan ini menghentikan langkah Anda.", 
               variant: "destructive" 
             });
             setLoadingPlan(null);
