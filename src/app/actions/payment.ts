@@ -22,9 +22,12 @@ export interface CreateTransactionInput {
 export async function createPaymentTransaction(input: CreateTransactionInput) {
   const { user, plan } = input;
 
+  // We embed the userId in the order_id so the webhook can parse it back
+  const orderId = `AUDIT-${user.id}-${Date.now()}`;
+
   const parameter = {
     transaction_details: {
-      order_id: `AUDIT-${user.id}-${Date.now()}`,
+      order_id: orderId,
       gross_amount: plan.price
     },
     credit_card: {
@@ -39,7 +42,12 @@ export async function createPaymentTransaction(input: CreateTransactionInput) {
       price: plan.price,
       quantity: 1,
       name: `Akses Premium: ${plan.name}`
-    }]
+    }],
+    // Optional: Add metadata for webhook processing
+    metadata: {
+      userId: user.id,
+      planId: plan.id
+    }
   };
 
   try {
@@ -47,7 +55,7 @@ export async function createPaymentTransaction(input: CreateTransactionInput) {
     return {
       token: transaction.token,
       redirect_url: transaction.redirect_url,
-      orderId: parameter.transaction_details.order_id
+      orderId: orderId
     };
   } catch (error: any) {
     console.error("MIDTRANS_TRANSACTION_ERROR:", error);
