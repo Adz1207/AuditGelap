@@ -1,14 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface Props {
   text: string;
   speed?: number;
   className?: string;
+  showCursor?: boolean;
 }
 
-const TypewriterEffect = ({ text, speed = 0.01, className = "" }: Props) => {
+const TypewriterEffect = ({ text, speed = 0.01, className = "", showCursor = true }: Props) => {
   const letters = Array.from(text);
 
   const container = {
@@ -41,7 +43,7 @@ const TypewriterEffect = ({ text, speed = 0.01, className = "" }: Props) => {
       variants={container}
       initial="hidden"
       animate="visible"
-      className={className}
+      className={cn(className, showCursor && "animate-cursor")}
     >
       {letters.map((letter, index) => (
         <motion.span variants={child} key={index}>

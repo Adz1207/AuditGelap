@@ -66,6 +66,16 @@
   100% { top: 100%; }
 }
 
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.animate-cursor::after {
+  content: '|';
+  animation: blink 1s step-start infinite;
+  @apply text-primary font-bold ml-1;
+}
+
 .glow-red {
   box-shadow: 0 0 15px rgba(139, 0, 0, 0.4);
 }
