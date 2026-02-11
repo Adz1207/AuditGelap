@@ -3,9 +3,12 @@
 
 import React, { useState } from 'react';
 import { Check, X, Shield, Zap, Target, Loader2 } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentTransaction } from '@/app/actions/payment';
+import { doc, updateDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 declare global {
   interface Window {
@@ -15,6 +18,7 @@ declare global {
 
 export const PricingTable = () => {
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
@@ -85,7 +89,7 @@ export const PricingTable = () => {
       return;
     }
 
-    if (!user) {
+    if (!user || !firestore) {
       toast({
         title: "Autentikasi Diperlukan",
         description: "Anda harus masuk untuk melakukan transaksi.",
@@ -112,15 +116,49 @@ export const PricingTable = () => {
 
       if (window.snap) {
         window.snap.pay(token, {
-          onSuccess: (result: any) => {
-            toast({ title: "Pembayaran Berhasil", description: "Selamat datang di jajaran eksekutor." });
-            window.location.reload();
+          onSuccess: async (result: any) => {
+            // Optimistic update of the user's role in Firestore
+            const userRef = doc(firestore, 'users', user.uid);
+            updateDoc(userRef, {
+              role: plan.id,
+              isPremium: true,
+              subscription: {
+                planId: plan.id,
+                status: 'active',
+                currentPeriodEnd: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+                midtransOrderId: result.order_id
+              }
+            }).catch(async (error) => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: userRef.path,
+                operation: 'update',
+                requestResourceData: { role: plan.id, isPremium: true }
+              }));
+            });
+
+            toast({ 
+              title: "Pembayaran Berhasil", 
+              description: "Selamat datang di jajaran eksekutor. Status Anda telah diperbarui." 
+            });
+            
+            setTimeout(() => {
+              window.location.href = '/audit';
+            }, 1500);
           },
           onPending: (result: any) => {
-            toast({ title: "Menunggu Pembayaran", description: "Segera selesaikan transaksi Anda." });
+            toast({ 
+              title: "Menunggu Pembayaran", 
+              description: "Segera selesaikan transaksi Anda. Waktu adalah uang." 
+            });
+            setLoadingPlan(null);
           },
           onError: (result: any) => {
-            toast({ title: "Pembayaran Gagal", description: "Terjadi kesalahan pada sistem pembayaran.", variant: "destructive" });
+            toast({ 
+              title: "Pembayaran Gagal", 
+              description: "Terjadi kesalahan pada sistem pembayaran. Coba lagi.", 
+              variant: "destructive" 
+            });
+            setLoadingPlan(null);
           },
           onClose: () => {
             setLoadingPlan(null);
