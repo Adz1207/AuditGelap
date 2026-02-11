@@ -1,7 +1,9 @@
+
 import Link from 'next/link';
 import { ArrowRight, ShieldAlert } from "lucide-react";
 import { MiniLossCalculator } from '@/components/audit/mini-loss-calculator';
 import { PricingTable } from '@/components/pricing/pricing-table';
+import { EarlyAccessHero } from '@/components/landing/early-access-hero';
 
 export default function LandingPage() {
   return (
@@ -51,6 +53,11 @@ export default function LandingPage() {
         <div className="flex-1 flex justify-center lg:justify-end w-full">
           <MiniLossCalculator />
         </div>
+      </div>
+
+      {/* Early Access Section */}
+      <div className="w-full">
+        <EarlyAccessHero />
       </div>
 
       {/* Pricing Section */}

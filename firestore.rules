@@ -5,25 +5,18 @@ service cloud.firestore {
 
     // --- Helper Functions ---
 
-    /** Checks if the request is from a signed-in user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the provided userId matches the authenticated user's UID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks for ownership and ensures the document exists before modification. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
-    /** 
-     * Helper to check premium status.
-     * Fetches the user document to check the 'role' field.
-     */
     function isPremium(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data.role != 'free';
     }
@@ -51,15 +44,8 @@ service cloud.firestore {
 
       match /audit_logs/{auditId} {
         allow get, list: if isOwner(userId);
-        
-        /**
-         * Access Control Logic for Audit Creation:
-         * 1. Must be the owner of the user path.
-         * 2. If creating a 'deep_audit', user must be premium (role != 'free').
-         */
         allow create: if isOwner(userId) && 
                       (request.resource.data.type == 'standard' || isPremium(userId));
-                      
         allow update, delete: if isExistingOwner(userId);
       }
 
@@ -68,6 +54,12 @@ service cloud.firestore {
         allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
+    }
+
+    match /waitlist/{waitlistId} {
+      // Allow anyone to join the waitlist
+      allow create: if true;
+      allow read, update, delete: if false;
     }
 
     // Default deny

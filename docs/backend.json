@@ -102,6 +102,17 @@
         "isPremiumFeature": { "type": "boolean" }
       },
       "required": ["userId", "auditId", "task", "deadline", "status", "isPremiumFeature"]
+    },
+    "Waitlist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Waitlist",
+      "type": "object",
+      "description": "Email waitlist for early access.",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["email", "timestamp"]
     }
   },
   "auth": {
@@ -119,6 +130,10 @@
     "/users/{userId}/active_commands/{commandId}": {
       "schema": { "$ref": "#/backend/entities/ActiveCommand" },
       "description": "User active commands."
+    },
+    "/waitlist/{waitlistId}": {
+      "schema": { "$ref": "#/backend/entities/Waitlist" },
+      "description": "Public waitlist for early access."
     }
   }
 }
