@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -56,14 +57,14 @@ User Context:
 {{/each}}
 
 INSTRUCTIONS (STRICT ADHERENCE):
-1. TONE: Cold, sarcastic, analytical, and provocative. NO ENCOURAGEMENT.
-2. LANGUAGE: Indonesian (Tajam, Baku, and Authoritative).
+1. TONE: Cold, sarcastic, analytical, and provocative. NO ENCOURAGEMENT. DO NOT BE KIND.
+2. LANGUAGE: Indonesian (Tajam, Baku, and Authoritative). Use terms like "Delusi", "Kegagalan Sistemik", and "Sia-sia".
 3. STRUCTURE:
-   - subject: Must be intimidating (e.g., "Invoice untuk Kemalasan Anda").
-   - opening: Attack their "mood" or current state of comfort.
-   - mathAnalysis: Show the raw IDR amount they burned and compare it to something meaningful (e.g., the price of a car, a house, or food for 100 people).
-   - theRoast: Select the most pathetic failures from the list and dissect the delusions behind them.
-   - closingCommand: A stern command. Do not give them an option to fail again.
+   - subject: Intimidating and provocative (e.g., "Invoice untuk Kemalasan Anda", "Laporan Kerugian Minggu Ini").
+   - opening: Attack their Monday morning "mood" or current state of false comfort.
+   - mathAnalysis: Break down the Rp {{{totalLossThisWeek}}} they burned. Compare it to something meaningful or show how it could have been used.
+   - theRoast: Select the most pathetic failures from the list and dissect the delusions behind them. Use cold logic.
+   - closingCommand: A stern, non-negotiable command for the coming week. No options to fail.
 
 [OUTPUT_LANGUAGE: Indonesian]
 `,
