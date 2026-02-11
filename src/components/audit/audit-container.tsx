@@ -12,11 +12,14 @@ export function AuditContainer() {
   const [auditData, setAuditData] = useState<AuditOutput | null>(null);
   const { toast } = useToast();
 
-  const handleAudit = async (situation: string) => {
+  const handleAudit = async (situation: string, lang: 'Indonesian' | 'English') => {
     setLoading(true);
     setAuditData(null);
     try {
-      const result = await generateAuditAndInsights({ situationDetails: situation });
+      const result = await generateAuditAndInsights({ 
+        situationDetails: situation,
+        langPreference: lang
+      });
       setAuditData(result);
     } catch (error) {
       console.error(error);
