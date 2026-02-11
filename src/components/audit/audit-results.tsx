@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe } from 'lucide-react';
 import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
-import { cn } from '@/lib/utils';
+import TypewriterEffect from '@/components/ui/typewriter-effect';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -14,7 +14,6 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
   const [time, setTime] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prevent hydration mismatch by setting time only on client
     setTime(new Date().toLocaleTimeString());
   }, []);
 
@@ -41,9 +40,9 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
         {data.diagnosis_title}
       </h2>
       
-      <p className="text-sm text-muted-foreground leading-relaxed mb-6 border-l-2 border-primary/50 pl-4 italic">
-        "{data.brutal_diagnosis}"
-      </p>
+      <div className="text-sm text-muted-foreground leading-relaxed mb-6 border-l-2 border-primary/50 pl-4 italic">
+        "<TypewriterEffect text={data.brutal_diagnosis} speed={0.015} />"
+      </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-4 mb-8">
@@ -70,9 +69,9 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
       {/* Analogy Section */}
       <div className="bg-white/[0.03] p-4 rounded-md mb-8 border-dashed border border-white/10">
         <h3 className="text-[10px] uppercase text-muted-foreground font-bold mb-2">Dark Reality Analogy:</h3>
-        <p className="text-sm text-gray-300 leading-relaxed">
-          {data.dark_analogy}
-        </p>
+        <div className="text-sm text-gray-300 leading-relaxed">
+          <TypewriterEffect text={data.dark_analogy} speed={0.01} />
+        </div>
       </div>
 
       {/* Commands */}
