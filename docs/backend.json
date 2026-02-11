@@ -180,6 +180,40 @@
         }
       },
       "required": ["userId", "input", "output", "type", "timestamp"]
+    },
+    "ActiveCommand": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActiveCommand",
+      "type": "object",
+      "description": "An actionable command assigned to a user following an audit.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who received the command."
+        },
+        "auditId": {
+          "type": "string",
+          "description": "Reference to the audit log that generated this command."
+        },
+        "task": {
+          "type": "string",
+          "description": "The specific action the user must take."
+        },
+        "deadline": {
+          "type": "number",
+          "description": "Timestamp indicating when the command expires."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed", "failed"],
+          "description": "The current state of the command."
+        },
+        "isPremiumFeature": {
+          "type": "boolean",
+          "description": "Indicates if this command was generated via a Deep Audit."
+        }
+      },
+      "required": ["userId", "auditId", "task", "deadline", "status", "isPremiumFeature"]
     }
   },
   "auth": {
@@ -245,6 +279,20 @@
           "params": [
             { "name": "userId" },
             { "name": "auditId" }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/active_commands/{commandId}",
+        "definition": {
+          "entityName": "ActiveCommand",
+          "schema": {
+            "$ref": "#/backend/entities/ActiveCommand"
+          },
+          "description": "Stores strategic commands issued to the user.",
+          "params": [
+            { "name": "userId" },
+            { "name": "commandId" }
           ]
         }
       }

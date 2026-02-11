@@ -58,6 +58,16 @@ service cloud.firestore {
         allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
+
+      /**
+       * @description Rules for the user's active strategic commands.
+       * @path /users/{userId}/active_commands/{commandId}
+       */
+      match /active_commands/{commandId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
     }
 
     // Default deny for any unmatched paths
