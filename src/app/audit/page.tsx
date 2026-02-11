@@ -2,6 +2,7 @@
 import { AuditContainer } from '@/components/audit/audit-container';
 import { ActiveCommandsList } from '@/components/audit/active-commands-list';
 import { CommandAuditSystem } from '@/components/audit/command-audit-system';
+import { AuditHistory } from '@/components/audit/audit-history';
 
 export default function AuditPage() {
   return (
@@ -21,6 +22,8 @@ export default function AuditPage() {
         <AuditContainer />
         
         <ActiveCommandsList />
+        
+        <AuditHistory />
       </div>
     </div>
   );
