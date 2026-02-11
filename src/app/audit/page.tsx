@@ -1,8 +1,13 @@
+
 import { AuditContainer } from '@/components/audit/audit-container';
+import { ActiveCommandsList } from '@/components/audit/active-commands-list';
+import { CommandAuditSystem } from '@/components/audit/command-audit-system';
 
 export default function AuditPage() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center py-12 px-6">
+      <CommandAuditSystem />
+      
       <div className="max-w-4xl w-full">
         <header className="mb-12 border-l-4 border-primary pl-6 py-2">
           <h1 className="text-3xl font-bold tracking-tight uppercase terminal-text">
@@ -14,6 +19,8 @@ export default function AuditPage() {
         </header>
 
         <AuditContainer />
+        
+        <ActiveCommandsList />
       </div>
     </div>
   );
