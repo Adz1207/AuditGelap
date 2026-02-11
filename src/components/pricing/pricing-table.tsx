@@ -117,12 +117,10 @@ export const PricingTable = () => {
       if (window.snap) {
         window.snap.pay(token, {
           onSuccess: async (result: any) => {
-            // Client-side completion logic: Update Firestore role and status
             const userRef = doc(firestore, 'users', user.uid);
             const updateData = {
               role: plan.id,
               isPremium: true,
-              premiumSince: Date.now(),
               subscription: {
                 planId: plan.id,
                 status: 'active',
@@ -151,14 +149,14 @@ export const PricingTable = () => {
           onPending: (result: any) => {
             toast({ 
               title: "Menunggu Pembayaran", 
-              description: "Selesaikan transaksi Anda segera. Waktu adalah uang." 
+              description: "Selesaikan pembayaran Anda segera. Waktu adalah uang." 
             });
             setLoadingPlan(null);
           },
           onError: (result: any) => {
             toast({ 
               title: "Pembayaran Gagal", 
-              description: "Transaksi ditolak. Jangan biarkan ini menghentikan langkah Anda.", 
+              description: "Transaksi ditolak.", 
               variant: "destructive" 
             });
             setLoadingPlan(null);

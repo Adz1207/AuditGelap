@@ -7,7 +7,7 @@ import { AuditResults } from './audit-results';
 import { generateAuditAndInsights, type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, collection, setDoc } from 'firebase/firestore';
+import { doc, collection, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Loader2 } from 'lucide-react';
@@ -56,6 +56,20 @@ export function AuditContainer() {
             path: auditLogRef.path,
             operation: 'create',
             requestResourceData: auditLogData
+          }));
+        });
+
+        // Update User Stats (Atomic increment)
+        const userRef = doc(firestore, 'users', user.uid);
+        const statsUpdate = {
+          'stats.totalAudits': increment(1),
+          'stats.totalLossObserved': increment(result.opportunity_cost_idr)
+        };
+        updateDoc(userRef, statsUpdate).catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: statsUpdate
           }));
         });
 

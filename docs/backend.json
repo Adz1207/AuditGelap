@@ -29,13 +29,14 @@
           "type": "boolean",
           "description": "Indicates active premium status."
         },
-        "premiumSince": {
-          "type": "number",
-          "description": "Timestamp when the user first went premium."
-        },
-        "createdAt": {
-          "type": "number",
-          "description": "Timestamp of account creation."
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalAudits": { "type": "number" },
+            "totalLossObserved": { "type": "number" },
+            "completedCommands": { "type": "number" },
+            "failedCommands": { "type": "number" }
+          }
         },
         "subscription": {
           "type": "object",
@@ -45,6 +46,10 @@
             "currentPeriodEnd": { "type": "number" },
             "midtransOrderId": { "type": "string" }
           }
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp of account creation."
         }
       },
       "required": ["uid", "email", "name", "role", "isPremium", "createdAt"]
