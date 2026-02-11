@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -18,6 +19,11 @@ const AuditInputSchema = z.object({
   langPreference: z
     .enum(['Indonesian', 'English'])
     .describe('The preferred language for the output.'),
+  isPremiumUser: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Whether the user has a premium subscription.'),
 });
 export type AuditInput = z.infer<typeof AuditInputSchema>;
 
@@ -28,12 +34,13 @@ const AuditOutputSchema = z.object({
   brutal_diagnosis: z.string().describe('Detailed critique of the situation.'),
   opportunity_cost_idr: z
     .number()
-    .describe('Total Cost of Inaction (COI) in IDR. Formula: (Dream Income * Months Delayed) * 1.1'),
+    .describe('Total Cost of Inaction (COI) in IDR.'),
   growth_loss_percentage: z
     .number()
-    .describe('Percentage of productive career lost. Formula: (Months Delayed / 480) * 100'),
+    .describe('Percentage of productive career lost.'),
   dark_analogy: z.string().describe('A metaphor for the situation.'),
-  strategic_commands: z.array(z.string()).describe('Array of 2 strategic commands.'),
+  strategic_commands: z.array(z.string()).describe('Array of strategic commands.'),
+  type: z.enum(['standard', 'deep_audit']).describe('The type of audit generated.'),
 });
 export type AuditOutput = z.infer<typeof AuditOutputSchema>;
 
@@ -47,45 +54,32 @@ const auditPrompt = ai.definePrompt({
   output: {schema: AuditOutputSchema},
   prompt: `[OUTPUT_LANGUAGE: {{{langPreference}}}] 
 User Input: {{{situationDetails}}}
+User Premium Status: {{#if isPremiumUser}}PREMIUM{{else}}FREE{{/if}}
 
 Role: Analisgelap (Cold, Strategic, & Brutal Logic).
 
 IMPORTANT TONE GUIDELINES:
-- If [OUTPUT_LANGUAGE] is Indonesian: Provide output that is "tajam dan dingin" (sharp and cold). Use formal yet cutting vocabulary.
-- If [OUTPUT_LANGUAGE] is English: Provide output that is "technical and authoritative". Use high-level strategic terminology.
-- KONSISTENSI: Jangan mencampur kedua bahasa dalam satu objek JSON. Maintain 100% consistency with the selected [OUTPUT_LANGUAGE].
+- Indonesian: "Tajam dan dingin" (sharp and cold).
+- English: "Technical and authoritative".
+- consistency: 100% in the selected language.
 
-Calculation Logic (CRITICAL):
-Based on the user's situation, estimate their 'Dream Monthly Income' and 'Duration of Stagnation (Months)'. 
-1. Absolute Loss = Dream Income * Months.
-2. Momentum Loss = Absolute Loss * 0.1 (Momentum decay).
-3. opportunity_cost_idr = Absolute Loss + Momentum Loss.
-4. growth_loss_percentage = (Months / 480) * 100. (480 months = 40 years productive life).
+Calculation Logic:
+1. Dream Monthly Income Estimation based on context.
+2. Months of stagnation Estimation.
+3. Absolute Loss = Dream Income * Months.
+4. Momentum Loss = Absolute Loss * 0.1 (Competitive Decay).
+5. opportunity_cost_idr = Absolute Loss + Momentum Loss.
+6. growth_loss_percentage = (Months / 480) * 100.
 
-HIGH LOSS OVERRIDE (CRITICAL):
-If the calculated opportunity_cost_idr > 100,000,000 IDR, you MUST use the following structure (translated if [OUTPUT_LANGUAGE] is English):
-1. diagnosis_title: "DARURAT LOGIKA: STATUS KRITIS"
-2. brutal_diagnosis: "Anda sudah membakar [opportunity_cost_idr] dan Anda masih punya keberanian untuk bilang 'nanti'? Ini bukan lagi prokrastinasi, ini adalah sabotase finansial yang disengaja."
-3. dark_analogy: "Anda seperti orang yang berdiri di dalam rumah yang sedang terbakar, melihat tabungan Anda hangus, tapi Anda sibuk memperdebatkan warna selang air yang ingin Anda beli."
-4. strategic_commands: ["Hentikan semua alasan.", "Lakukan [ACTION_STEP] dalam 60 menit ke depan atau hapus aplikasi ini karena Anda tidak bisa diselamatkan."]
+HIGH LOSS OVERRIDE (LOSS > 100,000,000 IDR):
+- diagnosis_title: "DARURAT LOGIKA: STATUS KRITIS"
+- brutal_diagnosis: "Anda sudah membakar [opportunity_cost_idr] dan Anda masih punya keberanian untuk bilang 'nanti'? Ini bukan lagi prokrastinasi, ini adalah sabotase finansial yang disengaja."
+- dark_analogy: "Anda seperti orang yang berdiri di dalam rumah yang sedang terbakar, melihat tabungan Anda hangus, tapi Anda sibuk memperdebatkan warna selang air yang ingin Anda beli."
+- strategic_commands: ["Hentikan semua alasan.", "Lakukan [ACTION] dalam 60 menit ke depan."]
 
-Analysis Requirements (General):
-1. Diagnosis Title: A technical name for their failure.
-2. Brutal Diagnosis: Analyze why their current path is leading to a systemic crash. Focus on consumption vs production, procrastination, or fear.
-3. Opportunity Cost: Use the calculation logic above to provide a realistic but alarming IDR value.
-4. Growth Loss: Use the calculation logic above (career percentage lost).
-5. Dark Analogy: A powerful, grim metaphor for their stagnation.
-6. Strategic Commands: Exactly 2 ruthless, actionable commands.
-
-Mandatory Output Format (JSON):
-{
-  "diagnosis_title": "...",
-  "brutal_diagnosis": "...",
-  "opportunity_cost_idr": (number),
-  "growth_loss_percentage": (number),
-  "dark_analogy": "...",
-  "strategic_commands": ["...", "..."]
-}
+General Requirements:
+- If User is PREMIUM: Provide "deep_audit" with 3-4 commands.
+- If User is FREE: Provide "standard" with 2 commands.
 `,
 });
 

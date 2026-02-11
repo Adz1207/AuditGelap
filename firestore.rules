@@ -3,13 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * CORE PHILOSOPHY
-     * This ruleset implements a strict User-Ownership model designed for "Authorization Independence." 
-     * Access control is determined entirely by the hierarchy of the data path (/users/{userId}), 
-     * ensuring that users can only interact with their own profile, statistics, and subscription data.
-     */
-
     // --- Helper Functions ---
 
     /** Checks if the request is from a signed-in user. */
@@ -25,6 +18,14 @@ service cloud.firestore {
     /** Checks for ownership and ensures the document exists before modification. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
+    }
+
+    /** 
+     * Helper to check premium status.
+     * Fetches the user document to check the 'role' field.
+     */
+    function isPremium(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role != 'free';
     }
 
     // --- Rules ---
@@ -45,24 +46,23 @@ service cloud.firestore {
       match /subscriptions/{subscriptionId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Rules for the user's audit history.
-       * @path /users/{userId}/audit_logs/{auditId}
-       */
-      match /audit_logs/{auditId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for the user's active strategic commands.
-       * @path /users/{userId}/active_commands/{commandId}
-       */
+      match /audit_logs/{auditId} {
+        allow get, list: if isOwner(userId);
+        
+        /**
+         * Access Control Logic for Audit Creation:
+         * 1. Must be the owner of the user path.
+         * 2. If creating a 'deep_audit', user must be premium (role != 'free').
+         */
+        allow create: if isOwner(userId) && 
+                      (request.resource.data.type == 'standard' || isPremium(userId));
+                      
+        allow update, delete: if isExistingOwner(userId);
+      }
+
       match /active_commands/{commandId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -70,7 +70,7 @@ service cloud.firestore {
       }
     }
 
-    // Default deny for any unmatched paths
+    // Default deny
     match /{path=**} {
       allow read, write: if false;
     }

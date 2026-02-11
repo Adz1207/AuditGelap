@@ -7,11 +7,6 @@
       "type": "object",
       "description": "Represents a user of the Auditgelap application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user.",
-          "format": "uuid"
-        },
         "uid": {
           "type": "string",
           "description": "The user's unique identifier from the authentication provider."
@@ -27,135 +22,60 @@
         },
         "role": {
           "type": "string",
-          "description": "The user's role, determining access levels (free, executioner, war_room).",
-          "format": "enum",
-          "items": {
-            "type": "string"
-          }
+          "description": "Access tier: 'free', 'executioner', or 'war_room'.",
+          "enum": ["free", "executioner", "war_room"]
         },
         "isPremium": {
           "type": "boolean",
-          "description": "Indicates whether the user has a premium subscription."
-        },
-        "statsId": {
-          "type": "string",
-          "description": "Reference to UserStats. (Relationship: User 1:1 UserStats)"
-        },
-        "subscriptionId": {
-          "type": "string",
-          "description": "Reference to Subscription. (Relationship: User 1:1 Subscription)"
+          "description": "Indicates active premium status."
         },
         "createdAt": {
           "type": "number",
-          "description": "Timestamp indicating when the user account was created."
+          "description": "Timestamp of account creation."
         }
       },
-      "required": [
-        "id",
-        "uid",
-        "email",
-        "name",
-        "role",
-        "isPremium",
-        "statsId",
-        "subscriptionId",
-        "createdAt"
-      ]
+      "required": ["uid", "email", "name", "role", "isPremium", "createdAt"]
     },
     "UserStats": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserStats",
       "type": "object",
-      "description": "Statistics related to a user's activity within the Auditgelap application.",
+      "description": "Statistics related to a user's activity.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user stats entity.",
-          "format": "uuid"
-        },
-        "totalAudits": {
-          "type": "number",
-          "description": "The total number of audits performed by the user."
-        },
-        "totalLossObserved": {
-          "type": "number",
-          "description": "The accumulated opportunity cost (in IDR) observed by the user."
-        },
-        "completedCommands": {
-          "type": "number",
-          "description": "The number of strategic commands completed by the user."
-        },
-        "failedCommands": {
-          "type": "number",
-          "description": "The number of strategic commands failed by the user."
-        }
+        "totalAudits": { "type": "number" },
+        "totalLossObserved": { "type": "number" },
+        "completedCommands": { "type": "number" },
+        "failedCommands": { "type": "number" }
       },
-      "required": [
-        "id",
-        "totalAudits",
-        "totalLossObserved",
-        "completedCommands",
-        "failedCommands"
-      ]
+      "required": ["totalAudits", "totalLossObserved", "completedCommands", "failedCommands"]
     },
     "Subscription": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Subscription",
       "type": "object",
-      "description": "Represents a user's subscription details for Auditgelap premium features.",
+      "description": "Details for premium features.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the subscription entity.",
-          "format": "uuid"
-        },
-        "planId": {
-          "type": "string",
-          "description": "The identifier of the subscription plan."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the subscription (active, expired).",
-          "format": "enum",
-          "items": {
-            "type": "string"
-          }
-        },
-        "currentPeriodEnd": {
-          "type": "number",
-          "description": "Timestamp indicating the end of the current subscription period."
-        },
-        "midtransOrderId": {
-          "type": "string",
-          "description": "The order ID from Midtrans payment gateway for this subscription."
-        }
+        "planId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "expired"] },
+        "currentPeriodEnd": { "type": "number" },
+        "midtransOrderId": { "type": "string" }
       },
-      "required": [
-        "id",
-        "planId",
-        "status",
-        "currentPeriodEnd",
-        "midtransOrderId"
-      ]
+      "required": ["planId", "status", "currentPeriodEnd", "midtransOrderId"]
     },
     "AuditLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AuditLog",
       "type": "object",
-      "description": "A record of an AI-powered audit performed by a user.",
+      "description": "A record of an AI-powered audit.",
       "properties": {
-        "userId": {
-          "type": "string",
-          "description": "Reference to the user who performed the audit."
-        },
+        "userId": { "type": "string" },
         "input": {
           "type": "object",
           "properties": {
-            "excuse": { "type": "string" },
-            "monthsDelayed": { "type": "number" },
-            "targetIncome": { "type": "number" }
+            "situationDetails": { "type": "string" },
+            "langPreference": { "type": "string" }
           },
-          "required": ["excuse", "monthsDelayed", "targetIncome"]
+          "required": ["situationDetails", "langPreference"]
         },
         "output": {
           "type": "object",
@@ -163,21 +83,16 @@
             "diagnosis_title": { "type": "string" },
             "brutal_diagnosis": { "type": "string" },
             "opportunity_cost_idr": { "type": "number" },
+            "growth_loss_percentage": { "type": "number" },
             "dark_analogy": { "type": "string" },
-            "strategic_commands": {
-              "type": "array",
-              "items": { "type": "string" }
-            }
+            "strategic_commands": { "type": "array", "items": { "type": "string" } }
           }
         },
         "type": {
           "type": "string",
           "enum": ["standard", "deep_audit"]
         },
-        "timestamp": {
-          "type": "number",
-          "description": "Timestamp when the audit was generated."
-        }
+        "timestamp": { "type": "number" }
       },
       "required": ["userId", "input", "output", "type", "timestamp"]
     },
@@ -185,42 +100,20 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ActiveCommand",
       "type": "object",
-      "description": "An actionable command assigned to a user following an audit.",
+      "description": "An actionable command assigned to a user.",
       "properties": {
-        "userId": {
-          "type": "string",
-          "description": "Reference to the user who received the command."
-        },
-        "auditId": {
-          "type": "string",
-          "description": "Reference to the audit log that generated this command."
-        },
-        "task": {
-          "type": "string",
-          "description": "The specific action the user must take."
-        },
-        "deadline": {
-          "type": "number",
-          "description": "Timestamp indicating when the command expires."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "completed", "failed"],
-          "description": "The current state of the command."
-        },
-        "isPremiumFeature": {
-          "type": "boolean",
-          "description": "Indicates if this command was generated via a Deep Audit."
-        }
+        "userId": { "type": "string" },
+        "auditId": { "type": "string" },
+        "task": { "type": "string" },
+        "deadline": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "isPremiumFeature": { "type": "boolean" }
       },
       "required": ["userId", "auditId", "task", "deadline", "status", "isPremiumFeature"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
@@ -228,72 +121,40 @@
         "path": "/users/{userId}",
         "definition": {
           "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "Stores user profile."
         }
       },
       {
         "path": "/users/{userId}/stats/{statsId}",
         "definition": {
           "entityName": "UserStats",
-          "schema": {
-            "$ref": "#/backend/entities/UserStats"
-          },
-          "description": "Stores user statistics.",
-          "params": [
-            { "name": "userId" },
-            { "name": "statsId" }
-          ]
+          "schema": { "$ref": "#/backend/entities/UserStats" },
+          "description": "User statistics."
         }
       },
       {
         "path": "/users/{userId}/subscriptions/{subscriptionId}",
         "definition": {
           "entityName": "Subscription",
-          "schema": {
-            "$ref": "#/backend/entities/Subscription"
-          },
-          "description": "Stores user subscription information.",
-          "params": [
-            { "name": "userId" },
-            { "name": "subscriptionId" }
-          ]
+          "schema": { "$ref": "#/backend/entities/Subscription" },
+          "description": "Subscription details."
         }
       },
       {
         "path": "/users/{userId}/audit_logs/{auditId}",
         "definition": {
           "entityName": "AuditLog",
-          "schema": {
-            "$ref": "#/backend/entities/AuditLog"
-          },
-          "description": "Stores individual audit reports for the user.",
-          "params": [
-            { "name": "userId" },
-            { "name": "auditId" }
-          ]
+          "schema": { "$ref": "#/backend/entities/AuditLog" },
+          "description": "User audit history."
         }
       },
       {
         "path": "/users/{userId}/active_commands/{commandId}",
         "definition": {
           "entityName": "ActiveCommand",
-          "schema": {
-            "$ref": "#/backend/entities/ActiveCommand"
-          },
-          "description": "Stores strategic commands issued to the user.",
-          "params": [
-            { "name": "userId" },
-            { "name": "commandId" }
-          ]
+          "schema": { "$ref": "#/backend/entities/ActiveCommand" },
+          "description": "User active commands."
         }
       }
     ]
