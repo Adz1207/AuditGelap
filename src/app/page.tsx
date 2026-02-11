@@ -1,17 +1,19 @@
 import Link from 'next/link';
 import { ArrowRight, ShieldAlert } from "lucide-react";
 import { MiniLossCalculator } from '@/components/audit/mini-loss-calculator';
+import { PricingTable } from '@/components/pricing/pricing-table';
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-20 font-mono relative overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white flex flex-col items-center font-mono relative overflow-x-hidden">
       {/* Background Ambience */}
       <div className="absolute inset-0 z-[-1] opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary rounded-full blur-[128px]" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent rounded-full blur-[128px]" />
       </div>
 
-      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-24">
+      {/* Hero Section */}
+      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-24 px-4 py-20">
         {/* Left Side: Copy */}
         <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
           {/* Label Otoritas */}
@@ -51,8 +53,15 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* Pricing Section */}
+      <div className="w-full border-t border-white/5">
+        <PricingTable />
+      </div>
+
+      <div className="pb-24" />
+
       {/* Footer Ticker */}
-      <div className="fixed bottom-0 w-full border-t border-white/5 bg-black/80 backdrop-blur-md py-2 overflow-hidden whitespace-nowrap">
+      <div className="fixed bottom-0 w-full border-t border-white/5 bg-black/80 backdrop-blur-md py-2 overflow-hidden whitespace-nowrap z-50">
         <div className="inline-block animate-marquee text-[10px] text-muted-foreground uppercase tracking-widest">
           TOTAL OPPORTUNITY COST USER MINGGU INI: RP 1.240.500.000 — JANGAN JADI BAGIAN DARI STATISTIK INI — EKSEKUSI SEKARANG — TOTAL OPPORTUNITY COST USER MINGGU INI: RP 1.240.500.000 — JANGAN JADI BAGIAN DARI STATISTIK INI — EKSEKUSI SEKARANG — 
         </div>
