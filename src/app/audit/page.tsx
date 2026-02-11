@@ -1,8 +1,8 @@
-
 import { AuditContainer } from '@/components/audit/audit-container';
 import { ActiveCommandsList } from '@/components/audit/active-commands-list';
 import { CommandAuditSystem } from '@/components/audit/command-audit-system';
 import { AuditHistory } from '@/components/audit/audit-history';
+import { WeeklyAuditReport } from '@/components/audit/weekly-audit-report';
 
 export default function AuditPage() {
   return (
@@ -20,6 +20,8 @@ export default function AuditPage() {
         </header>
 
         <AuditContainer />
+        
+        <WeeklyAuditReport />
         
         <ActiveCommandsList />
         
