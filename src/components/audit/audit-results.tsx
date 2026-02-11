@@ -37,11 +37,11 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
 
       {/* Diagnosis Title */}
       <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic terminal-text">
-        {data.diagnosis_title}
+        <TypewriterEffect text={data.diagnosis_title} speed={0.05} />
       </h2>
       
       <div className="text-sm text-muted-foreground leading-relaxed mb-6 border-l-2 border-primary/50 pl-4 italic">
-        "<TypewriterEffect text={data.brutal_diagnosis} speed={0.015} />"
+        "<TypewriterEffect text={data.brutal_diagnosis} speed={0.02} />"
       </div>
 
       {/* Metrics Grid */}
@@ -70,7 +70,7 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
       <div className="bg-white/[0.03] p-4 rounded-md mb-8 border-dashed border border-white/10">
         <h3 className="text-[10px] uppercase text-muted-foreground font-bold mb-2">Dark Reality Analogy:</h3>
         <div className="text-sm text-gray-300 leading-relaxed">
-          <TypewriterEffect text={data.dark_analogy} speed={0.01} />
+          <TypewriterEffect text={data.dark_analogy} speed={0.015} />
         </div>
       </div>
 
