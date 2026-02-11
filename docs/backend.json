@@ -1,0 +1,208 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Auditgelap application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "uid": {
+          "type": "string",
+          "description": "The user's unique identifier from the authentication provider."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role, determining access levels (free, executioner, war_room).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isPremium": {
+          "type": "boolean",
+          "description": "Indicates whether the user has a premium subscription."
+        },
+        "statsId": {
+          "type": "string",
+          "description": "Reference to UserStats. (Relationship: User 1:1 UserStats)"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "Reference to Subscription. (Relationship: User 1:1 Subscription)"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp indicating when the user account was created."
+        }
+      },
+      "required": [
+        "id",
+        "uid",
+        "email",
+        "name",
+        "role",
+        "isPremium",
+        "statsId",
+        "subscriptionId",
+        "createdAt"
+      ]
+    },
+    "UserStats": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserStats",
+      "type": "object",
+      "description": "Statistics related to a user's activity within the Auditgelap application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user stats entity.",
+          "format": "uuid"
+        },
+        "totalAudits": {
+          "type": "number",
+          "description": "The total number of audits performed by the user."
+        },
+        "totalLossObserved": {
+          "type": "number",
+          "description": "The accumulated opportunity cost (in IDR) observed by the user."
+        },
+        "completedCommands": {
+          "type": "number",
+          "description": "The number of strategic commands completed by the user."
+        },
+        "failedCommands": {
+          "type": "number",
+          "description": "The number of strategic commands failed by the user."
+        }
+      },
+      "required": [
+        "id",
+        "totalAudits",
+        "totalLossObserved",
+        "completedCommands",
+        "failedCommands"
+      ]
+    },
+    "Subscription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subscription",
+      "type": "object",
+      "description": "Represents a user's subscription details for Auditgelap premium features.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the subscription entity.",
+          "format": "uuid"
+        },
+        "planId": {
+          "type": "string",
+          "description": "The identifier of the subscription plan."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the subscription (active, expired).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "currentPeriodEnd": {
+          "type": "number",
+          "description": "Timestamp indicating the end of the current subscription period."
+        },
+        "midtransOrderId": {
+          "type": "string",
+          "description": "The order ID from Midtrans payment gateway for this subscription."
+        }
+      },
+      "required": [
+        "id",
+        "planId",
+        "status",
+        "currentPeriodEnd",
+        "midtransOrderId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Includes `uid`, `email`, `name`, `role`, `isPremium`, `statsId`, `subscriptionId`, and `createdAt`.  User data is isolated under their userId for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stats/{statsId}",
+        "definition": {
+          "entityName": "UserStats",
+          "schema": {
+            "$ref": "#/backend/entities/UserStats"
+          },
+          "description": "Stores user statistics, including `totalAudits`, `totalLossObserved`, `completedCommands`, and `failedCommands`. Stored as a subcollection of `/users/{userId}` to ensure only the user can access their stats.  The `statsId` is used to guarantee unique stats document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "statsId",
+              "description": "The unique identifier for the user stats."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/subscriptions/{subscriptionId}",
+        "definition": {
+          "entityName": "Subscription",
+          "schema": {
+            "$ref": "#/backend/entities/Subscription"
+          },
+          "description": "Stores user subscription information, including `planId`, `status`, `currentPeriodEnd`, and `midtransOrderId`. Stored as a subcollection of `/users/{userId}` to ensure only the user can access their subscription details. The `subscriptionId` guarantees a unique subscription document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "subscriptionId",
+              "description": "The unique identifier for the user subscription."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the Auditgelap application, focusing on user data, subscription management, and integration with payment gateways like Midtrans/Stripe. The design prioritizes Authorization Independence via denormalization and supports secure list operations (QAPs). User data and related entities (UserStats and Subscription) are structured under the `/users/{userId}` path for clear ownership and simplified security rules. This structure allows for secure and scalable management of user accounts and subscriptions.\n\n**Authorization Independence:** The structure enforces Authorization Independence (CRITICAL). Each user's data (profile, stats, and subscription) is stored under their unique `userId`, avoiding the need for `get()` calls in security rules to validate ownership or access.\n\n**QAPs (Rules are not Filters):**\nThe chosen structure enables secure `list` operations:\n*   Path-Based Ownership (`/users/{userId}`): This inherently secures user data, as rules can easily validate `request.auth.uid == userId` for create, update, and delete operations. Listing user data is generally restricted to the user themselves.\n\n**Invariants:** The design supports data integrity by associating stats and subscription directly with each user, ensuring consistent access to related information."
+  }
+}
