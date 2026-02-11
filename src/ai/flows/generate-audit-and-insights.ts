@@ -28,10 +28,10 @@ const AuditOutputSchema = z.object({
   brutal_diagnosis: z.string().describe('Detailed critique of the situation.'),
   opportunity_cost_idr: z
     .number()
-    .describe('Numeric value of financial loss in Indonesian Rupiah.'),
+    .describe('Total Cost of Inaction (COI) in IDR. Formula: (Dream Income * Months Delayed) * 1.1'),
   growth_loss_percentage: z
     .number()
-    .describe('Numeric value of growth loss, e.g., 8.33.'),
+    .describe('Percentage of productive career lost. Formula: (Months Delayed / 480) * 100'),
   dark_analogy: z.string().describe('A metaphor for the situation.'),
   strategic_commands: z.array(z.string()).describe('Array of 2 strategic commands.'),
 });
@@ -56,12 +56,19 @@ IMPORTANT TONE GUIDELINES:
 - KONSISTENSI: Jangan mencampur kedua bahasa dalam satu objek JSON. Maintain 100% consistency with the selected [OUTPUT_LANGUAGE].
 - TONE: Cold, objective, and brutal. Do not sugarcoat failure.
 
+Calculation Logic (CRITICAL):
+Based on the user's situation, estimate their 'Dream Monthly Income' and 'Duration of Stagnation (Months)'. 
+1. Absolute Loss = Dream Income * Months.
+2. Momentum Loss = Absolute Loss * 0.1 (Momentum decay).
+3. opportunity_cost_idr = Absolute Loss + Momentum Loss.
+4. growth_loss_percentage = (Months / 480) * 100. (480 months = 40 years productive life).
+
 Analysis Requirements:
 1. Diagnosis Title: A technical name for their failure (e.g., "Intellectual Stagnation Trap", "Sistem Delusi Linear").
 2. Brutal Diagnosis: Analyze why their current path is leading to a systemic crash. Focus on consumption vs production, procrastination, or fear.
-3. Opportunity Cost: Estimate the financial loss in IDR (Indonesian Rupiah) based on typical industry rates or missed earnings.
-4. Growth Loss: Calculate a realistic but alarming percentage of potential growth lost.
-5. Dark Analogy: A powerful, grim metaphor for their stagnation (e.g., "You are a library patron trying to learn surgery by reading books while the patient is dying on the table").
+3. Opportunity Cost: Use the calculation logic above to provide a realistic but alarming IDR value.
+4. Growth Loss: Use the calculation logic above (career percentage lost).
+5. Dark Analogy: A powerful, grim metaphor for their stagnation.
 6. Strategic Commands: Exactly 2 ruthless, actionable commands.
 
 Mandatory Output Format (JSON):
