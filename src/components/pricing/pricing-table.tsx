@@ -6,7 +6,7 @@ import { Check, X, Shield, Zap, Target, Loader2 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentTransaction } from '@/app/actions/payment';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
