@@ -1,8 +1,7 @@
-
 "use client"
 
 import React, { useState } from 'react';
-import { Check, X, Shield, Zap, Target, Loader2 } from 'lucide-react';
+import { Check, X, Shield, Zap, Target, Loader2, ShieldAlert } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentTransaction } from '@/app/actions/payment';
@@ -36,9 +35,9 @@ export const PricingTable = () => {
         "Diagnosis Teks Sederhana",
       ],
       notIncluded: [
-        "Shadow Tracking (History)",
+        "Shadow Tracking (Arsip Dosa)",
         "Deep AI Analysis",
-        "Social Stakes Integration",
+        "Execution Verifier Protocol",
       ],
       cta: "Mulai Audit Gratis",
       featured: false
@@ -49,18 +48,18 @@ export const PricingTable = () => {
       price: 250000,
       displayPrice: "250.000",
       costComparison: "Setara 0.5% dari Potensi Kerugian Anda",
-      icon: <Zap className="text-red-500" size={20} />,
+      icon: <Zap className="text-primary" size={20} />,
       features: [
         "Unlimited Audit Logika",
         "Shadow Tracking (Arsip Dosa)",
-        "Deep Audit (Gemini 1.5 Pro)",
-        "Daily 'Scolding' Notifications",
-        "Export Laporan PDF (Audit Report)",
+        "Deep Audit Analysis (Gemini Flash)",
+        "Execution Verifier (Proof of Work)",
+        "Daily 'Scolding' Alerts",
       ],
       notIncluded: [
-        "AI War Room (Personal Roadmap)",
+        "AI War Room (30-Day Roadmap)",
       ],
-      cta: "Hentikan Kebocoran Sekarang",
+      cta: "Tebus Dosa Sekarang",
       featured: true
     },
     {
@@ -72,9 +71,9 @@ export const PricingTable = () => {
       icon: <Shield className="text-white" size={20} />,
       features: [
         "Semua Fitur Executioner",
-        "AI War Room (30-Day Roadmap)",
-        "Competitor Reality Leak",
-        "Social Stakes (Lapor ke Mentor)",
+        "AI War Room (Personal Roadmap)",
+        "Weekly Roast Intelligence",
+        "Social Stakes Integration",
         "Priority Support (24/7 Analysis)",
       ],
       notIncluded: [],
@@ -91,8 +90,8 @@ export const PricingTable = () => {
 
     if (!user || !firestore) {
       toast({
-        title: "Autentikasi Diperlukan",
-        description: "Anda harus masuk untuk melakukan transaksi.",
+        title: "IDENTITAS DIPERLUKAN",
+        description: "Anda tidak bisa menebus dosa secara anonim. Silakan login.",
         variant: "destructive"
       });
       return;
@@ -121,12 +120,10 @@ export const PricingTable = () => {
             const updateData = {
               role: plan.id,
               isPremium: true,
-              subscription: {
-                planId: plan.id,
-                status: 'active',
-                currentPeriodEnd: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
-                midtransOrderId: result.order_id
-              }
+              'subscription.planId': plan.id,
+              'subscription.status': 'active',
+              'subscription.currentPeriodEnd': Date.now() + (30 * 24 * 60 * 60 * 1000),
+              'subscription.midtransOrderId': result.order_id
             };
 
             updateDoc(userRef, updateData).catch(async () => {
@@ -138,25 +135,25 @@ export const PricingTable = () => {
             });
 
             toast({ 
-              title: "Pembayaran Berhasil", 
-              description: `Anda sekarang adalah ${plan.name}. Status telah diperbarui.` 
+              title: "PENEBUSAN BERHASIL", 
+              description: `Akses ${plan.name} diaktifkan. Jangan sia-siakan uang Anda.` 
             });
             
             setTimeout(() => {
               window.location.href = '/audit';
-            }, 1500);
+            }, 2000);
           },
-          onPending: (result: any) => {
+          onPending: () => {
             toast({ 
-              title: "Menunggu Pembayaran", 
-              description: "Selesaikan pembayaran Anda segera. Waktu adalah uang." 
+              title: "MENUNGGU EKSEKUSI", 
+              description: "Selesaikan pembayaran Anda. Waktu penundaan terus berjalan." 
             });
             setLoadingPlan(null);
           },
-          onError: (result: any) => {
+          onError: () => {
             toast({ 
-              title: "Pembayaran Gagal", 
-              description: "Transaksi ditolak.", 
+              title: "TRANSAKSI GAGAL", 
+              description: "Protokol pembayaran ditolak. Coba lagi atau akui kegagalan Anda.", 
               variant: "destructive" 
             });
             setLoadingPlan(null);
@@ -168,7 +165,7 @@ export const PricingTable = () => {
       }
     } catch (error) {
       toast({
-        title: "Kesalahan Sistem",
+        title: "KESALAHAN SISTEM",
         description: "Gagal memproses inisialisasi pembayaran.",
         variant: "destructive"
       });
@@ -177,48 +174,56 @@ export const PricingTable = () => {
   };
 
   return (
-    <section className="bg-black py-24 px-4 font-mono">
+    <section className="bg-black py-24 px-4 font-mono border-t border-white/5">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-primary mb-4 border border-primary/20 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold">
+            <ShieldAlert size={14} />
+            Protokol Penebusan Dosa
+          </div>
           <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
-            Berapa Harga <span className="text-red-600">Disiplin Anda?</span>
+            Berapa Harga <span className="text-primary italic">Disiplin Anda?</span>
           </h2>
-          <p className="text-gray-500 text-sm max-w-lg mx-auto italic">
+          <p className="text-zinc-500 text-sm max-w-lg mx-auto italic leading-relaxed">
             "Lebih baik membayar sistem untuk memaksa Anda maju, daripada membayar penyesalan saat kesempatan Anda diambil orang lain."
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-zinc-800 rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-zinc-800 rounded-lg overflow-hidden shadow-2xl">
           {plans.map((plan, index) => (
             <div 
               key={index} 
-              className={`flex flex-col p-8 border-b md:border-b-0 md:border-r border-zinc-800 last:border-0 transition-all duration-500 ${plan.featured ? 'bg-zinc-900/30' : 'bg-black'}`}
+              className={`flex flex-col p-8 border-b md:border-b-0 md:border-r border-zinc-800 last:border-0 transition-all duration-500 ${plan.featured ? 'bg-zinc-900/30 ring-1 ring-primary/20 relative z-10' : 'bg-black'}`}
             >
+              {plan.featured && (
+                <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(139,0,0,0.5)]" />
+              )}
+              
               <div className="flex items-center gap-2 mb-4">
                 {plan.icon}
-                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{plan.name}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{plan.name}</span>
               </div>
 
               <div className="mb-2">
                 <span className="text-4xl font-black text-white italic">Rp {plan.displayPrice}</span>
-                <span className="text-zinc-600 text-[10px] ml-1 uppercase">/Bulan</span>
+                <span className="text-zinc-600 text-[10px] ml-1 uppercase">/30 Hari</span>
               </div>
               
-              <div className="text-[10px] text-red-500 font-bold uppercase mb-8 tracking-tighter">
+              <div className="text-[10px] text-primary font-bold uppercase mb-8 tracking-tighter">
                 {plan.costComparison}
               </div>
 
               <div className="flex-grow space-y-4 mb-10">
                 {plan.features.map((feature, i) => (
-                  <div key={i} className="flex items-start gap-3 text-xs text-zinc-300">
-                    <Check size={14} className="text-green-600 mt-0.5" />
-                    <span>{feature}</span>
+                  <div key={i} className="flex items-start gap-3 text-[11px] text-zinc-300">
+                    <Check size={14} className="text-accent mt-0.5 shrink-0" />
+                    <span className="leading-tight">{feature}</span>
                   </div>
                 ))}
                 {plan.notIncluded.map((feature, i) => (
-                  <div key={i} className="flex items-start gap-3 text-xs text-zinc-700">
-                    <X size={14} className="mt-0.5" />
-                    <span className="line-through">{feature}</span>
+                  <div key={i} className="flex items-start gap-3 text-[11px] text-zinc-700">
+                    <X size={14} className="mt-0.5 shrink-0" />
+                    <span className="line-through leading-tight">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -228,7 +233,7 @@ export const PricingTable = () => {
                 disabled={loadingPlan === plan.id}
                 className={`w-full py-4 px-6 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 rounded-sm border flex items-center justify-center gap-2 ${
                   plan.featured 
-                  ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 shadow-[0_0_20px_-5px_rgba(220,38,38,0.5)]' 
+                  ? 'bg-primary text-white border-primary hover:bg-white hover:text-black hover:border-white shadow-[0_0_20px_-5px_rgba(139,0,0,0.5)]' 
                   : 'bg-transparent text-white border-zinc-700 hover:border-white hover:bg-white hover:text-black'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -243,8 +248,8 @@ export const PricingTable = () => {
         </div>
         
         <div className="mt-12 text-center">
-          <p className="text-[9px] text-zinc-700 uppercase tracking-widest leading-relaxed">
-            Keamanan Data Terjamin // Transaksi Terenkripsi // Tidak Ada Pengembalian Dana Bagi Mereka Yang Tidak Eksekusi
+          <p className="text-[9px] text-zinc-700 uppercase tracking-[0.3em] leading-relaxed">
+            Keamanan Data Terjamin // Transaksi Terenkripsi // Tidak Ada Refund Bagi Mereka Yang Malas
           </p>
         </div>
       </div>

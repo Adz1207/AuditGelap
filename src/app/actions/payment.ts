@@ -1,4 +1,3 @@
-
 'use server';
 
 import { snap } from '@/lib/midtrans';
@@ -18,11 +17,12 @@ export interface CreateTransactionInput {
 
 /**
  * Server Action to create a Midtrans transaction token.
+ * Translates the "Penebusan Dosa" (Redemption) logic into a secure payment session.
  */
 export async function createPaymentTransaction(input: CreateTransactionInput) {
   const { user, plan } = input;
 
-  // We embed the userId in the order_id so the webhook can parse it back
+  // Order ID format: "AUDIT-{userId}-{timestamp}" for easy parsing in webhooks
   const orderId = `AUDIT-${user.id}-${Date.now()}`;
 
   const parameter = {
@@ -41,9 +41,8 @@ export async function createPaymentTransaction(input: CreateTransactionInput) {
       id: plan.id,
       price: plan.price,
       quantity: 1,
-      name: `Akses Premium: ${plan.name}`
+      name: `Penebusan Dosa: Paket ${plan.name}`
     }],
-    // Optional: Add metadata for webhook processing
     metadata: {
       userId: user.id,
       planId: plan.id
@@ -59,6 +58,6 @@ export async function createPaymentTransaction(input: CreateTransactionInput) {
     };
   } catch (error: any) {
     console.error("MIDTRANS_TRANSACTION_ERROR:", error);
-    throw new Error("Gagal menginisialisasi gateway pembayaran.");
+    throw new Error("Gagal menginisialisasi protokol pembayaran. Sistem terganggu.");
   }
 }
