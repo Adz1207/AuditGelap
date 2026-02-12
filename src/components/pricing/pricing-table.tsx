@@ -158,6 +158,7 @@ export const PricingTable = () => {
               description: "Protokol pembayaran ditolak. Alasan Anda menang lagi bahkan sebelum mulai. Coba lagi atau akui kekalahan Anda.", 
               variant: "destructive" 
             });
+            router.push('/payment-failed');
             setLoadingPlan(null);
           },
           onClose: () => {
