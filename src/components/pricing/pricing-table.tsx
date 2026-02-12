@@ -84,6 +84,51 @@ export const PricingTable = () => {
     }
   ];
 
+  const handlePaymentResult = async (result: any, status: 'success' | 'pending' | 'error', plan: typeof plans[0]) => {
+    if (!user || !firestore) return;
+
+    if (status === 'success') {
+      const userRef = doc(firestore, 'users', user.uid);
+      const updateData = {
+        role: plan.id,
+        isPremium: true,
+        'subscription.planId': plan.id,
+        'subscription.status': 'active',
+        'subscription.currentPeriodEnd': Date.now() + (30 * 24 * 60 * 60 * 1000),
+        'subscription.midtransOrderId': result.order_id
+      };
+
+      try {
+        await updateDoc(userRef, updateData);
+        toast({ 
+          title: "PENEBUSAN BERHASIL", 
+          description: `PROTOKOL_${plan.name.toUpperCase()}_AKTIF. Sinkronisasi database selesai.` 
+        });
+        router.push(`/payment-success?orderId=${result.order_id}&amount=${plan.price}`);
+      } catch (e) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'update',
+          requestResourceData: updateData
+        }));
+      }
+    } else if (status === 'pending') {
+      toast({ 
+        title: "MENUNGGU EKSEKUSI", 
+        description: "Status pembayaran menunggu. Jangan tunda pengerjaan tugas hanya karena ini." 
+      });
+      setLoadingPlan(null);
+    } else if (status === 'error') {
+      toast({ 
+        title: "PENEBUSAN GAGAL", 
+        description: "Sistem mendeteksi kegagalan transaksi. Jangan biarkan ini jadi alasan penundaan Anda.", 
+        variant: "destructive" 
+      });
+      router.push('/payment-failed');
+      setLoadingPlan(null);
+    }
+  };
+
   const handleSubscribe = async (plan: typeof plans[0]) => {
     if (plan.price === 0) {
       router.push('/audit');
@@ -93,7 +138,7 @@ export const PricingTable = () => {
     if (!user || !firestore) {
       toast({
         title: "IDENTITAS DIPERLUKAN",
-        description: "Anda tidak bisa menebus dosa secara anonim. Silakan login.",
+        description: "Anda tidak bisa menebus dosa secara anonim. Silakan login atau daftar.",
         variant: "destructive"
       });
       return;
@@ -117,50 +162,9 @@ export const PricingTable = () => {
 
       if (window.snap) {
         window.snap.pay(token, {
-          onSuccess: (result: any) => {
-            const userRef = doc(firestore, 'users', user.uid);
-            const updateData = {
-              role: plan.id,
-              isPremium: true,
-              'subscription.planId': plan.id,
-              'subscription.status': 'active',
-              'subscription.currentPeriodEnd': Date.now() + (30 * 24 * 60 * 60 * 1000),
-              'subscription.midtransOrderId': result.order_id
-            };
-
-            updateDoc(userRef, updateData).catch(async () => {
-              errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: userRef.path,
-                operation: 'update',
-                requestResourceData: updateData
-              }));
-            });
-
-            toast({ 
-              title: "PENEBUSAN BERHASIL", 
-              description: `PROTOKOL_${plan.name.toUpperCase()}_AKTIF. Jangan sia-siakan uang Anda kali ini.` 
-            });
-            
-            setTimeout(() => {
-              router.push(`/payment-success?orderId=${result.order_id}&amount=${plan.price}`);
-            }, 1000);
-          },
-          onPending: () => {
-            toast({ 
-              title: "MENUNGGU EKSEKUSI", 
-              description: "Selesaikan pembayaran Anda. Waktu penundaan terus dihitung." 
-            });
-            setLoadingPlan(null);
-          },
-          onError: () => {
-            toast({ 
-              title: "TRANSAKSI GAGAL", 
-              description: "Protokol pembayaran ditolak. Alasan Anda menang lagi bahkan sebelum mulai. Coba lagi atau akui kekalahan Anda.", 
-              variant: "destructive" 
-            });
-            router.push('/payment-failed');
-            setLoadingPlan(null);
-          },
+          onSuccess: (result: any) => handlePaymentResult(result, 'success', plan),
+          onPending: (result: any) => handlePaymentResult(result, 'pending', plan),
+          onError: (result: any) => handlePaymentResult(result, 'error', plan),
           onClose: () => {
             setLoadingPlan(null);
           }
