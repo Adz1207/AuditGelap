@@ -1,7 +1,8 @@
+
 'use server';
 
 /**
- * @fileOverview Verifies the integrity of a task execution claim.
+ * @fileOverview Verifies the integrity of a task execution claim using the "Execution Verifier" protocol.
  *
  * - verifyExecution - A function that handles the verification process.
  */
@@ -20,7 +21,7 @@ const VerifyExecutionOutputSchema = z.object({
   integrity_score: z.number().int().min(0).max(100).describe('Score of the execution integrity.'),
   is_valid: z.boolean().describe('Whether the execution is deemed valid.'),
   analysis: z.string().describe('Brief analysis of why it is valid or bullshit.'),
-  resolution_message: z.string().describe('A cold resolution or a brutal roast.'),
+  resolution_message: z.string().describe('A cold resolution (if valid) or a brutal roast (if bullshit).'),
 });
 export type VerifyExecutionOutput = z.infer<typeof VerifyExecutionOutputSchema>;
 
@@ -42,14 +43,15 @@ Tugas: "{{{taskTitle}}}"
 Bukti Eksekusi: "{{{executionProof}}}"
 
 INSTRUCTIONS:
-1. KRITERIA VALID: Spesifik, ada detail teknis, menunjukkan progres riil, data-driven.
-2. KRITERIA BULLSHIT: Umum ("sudah selesai", "aman"), ambigu, emosional ("saya sudah berusaha", "capek bgt"), atau cuma alasan.
+1. KRITERIA VALID: Spesifik, ada detail teknis, menunjukkan progres riil, data-driven, dan tidak emosional.
+2. KRITERIA BULLSHIT: Umum ("sudah selesai", "aman", "beres"), ambigu, emosional ("saya sudah berusaha", "capek bgt", "besok lanjut"), atau cuma alasan.
 3. TONE: Dingin, skeptis ekstrem, dan tajam.
 4. LANGUAGE: Bahasa Indonesia (Baku & Brutal).
 
 Output Logic:
-- Jika "Bullshit": is_valid = false, integrity_score < 30, resolution_message = Roasting pedas tentang kemalasan dan kebohongan mereka.
-- Jika "Valid": is_valid = true, integrity_score > 70, resolution_message = Pesan dingin yang mengakui langkah kecil mereka tanpa pujian berlebihan.
+- Jika "Bullshit": is_valid = false, integrity_score < 30.
+- Jika "Valid": is_valid = true, integrity_score > 70.
+- resolution_message: Harus berupa pesan dingin yang mengakui langkah kecil mereka (jika valid) atau roasting pedas tentang kemalasan dan kebohongan mereka (jika bullshit).
 
 [OUTPUT_LANGUAGE: Indonesian]
 `,

@@ -99,7 +99,10 @@
         "task": { "type": "string" },
         "deadline": { "type": "number" },
         "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
-        "isPremiumFeature": { "type": "boolean" }
+        "isPremiumFeature": { "type": "boolean" },
+        "integrityScore": { "type": "number" },
+        "proof": { "type": "string" },
+        "completedAt": { "type": "number" }
       },
       "required": ["userId", "auditId", "task", "deadline", "status", "isPremiumFeature"]
     },

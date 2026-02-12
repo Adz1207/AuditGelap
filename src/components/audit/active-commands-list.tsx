@@ -1,13 +1,14 @@
+
 "use client";
 
 import { useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle2, Clock, AlertCircle, Loader2, ShieldCheck, Send, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Loader2, ShieldCheck, Send, ShieldAlert, TrendingDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -58,9 +59,11 @@ export function ActiveCommandsList() {
 
       setVerificationResult(result);
 
-      if (result.is_valid) {
+      if (result.is_valid && result.integrity_score > 70) {
         const cmdRef = doc(firestore, 'users', user.uid, 'active_commands', verifyingCmd.id);
+        const userRef = doc(firestore, 'users', user.uid);
         
+        // Update Command Status
         updateDoc(cmdRef, { 
           status: 'completed',
           completedAt: Date.now(),
@@ -74,13 +77,24 @@ export function ActiveCommandsList() {
           }));
         });
 
+        // Update User Stats
+        updateDoc(userRef, {
+          'stats.completedCommands': increment(1)
+        }).catch(async () => {
+           errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: { 'stats.completedCommands': 'increment' }
+          }));
+        });
+
         toast({
           title: "INTEGRITAS TERVERIFIKASI",
           description: result.resolution_message,
         });
         
         // Close dialog after a short delay to show result
-        setTimeout(() => setVerifyingCmd(null), 3000);
+        setTimeout(() => setVerifyingCmd(null), 4000);
       } else {
         toast({
           variant: "destructive",
@@ -93,7 +107,7 @@ export function ActiveCommandsList() {
       toast({
         variant: "destructive",
         title: "KESALAHAN SISTEM",
-        description: "Gagal memproses verifikasi integrity.",
+        description: "Gagal memproses verifikasi integrity. Protokol gagal.",
       });
     } finally {
       setIsProcessing(false);
@@ -133,7 +147,7 @@ export function ActiveCommandsList() {
                 {cmd.status === 'completed' && <ShieldCheck className="w-5 h-5 text-green-500 mt-1 shrink-0" />}
                 {cmd.status === 'failed' && <AlertCircle className="w-5 h-5 text-primary mt-1 shrink-0" />}
                 
-                <div>
+                <div className="flex-1">
                   <p className={`text-sm font-mono leading-tight ${cmd.status === 'completed' ? 'line-through text-zinc-600' : 'text-zinc-200'}`}>
                     {cmd.task}
                   </p>
@@ -170,10 +184,10 @@ export function ActiveCommandsList() {
 
       {/* Verification Dialog */}
       <Dialog open={!!verifyingCmd} onOpenChange={() => !isProcessing && setVerifyingCmd(null)}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white font-mono">
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white font-mono max-w-md">
           <DialogHeader>
-            <DialogTitle className="uppercase tracking-tighter flex items-center gap-2">
-              <ShieldAlert className="text-primary" />
+            <DialogTitle className="uppercase tracking-tighter flex items-center gap-2 text-primary">
+              <ShieldAlert size={20} />
               Audit Integritas Eksekusi
             </DialogTitle>
             <DialogDescription className="text-zinc-500 text-[10px] uppercase">
@@ -185,29 +199,43 @@ export function ActiveCommandsList() {
             <div className="space-y-4 py-4">
               <div className={`p-4 border rounded ${verificationResult.is_valid ? 'border-green-900/50 bg-green-950/10' : 'border-primary/50 bg-primary/10'}`}>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-bold uppercase">Status Audit</span>
+                  <span className="text-[10px] font-bold uppercase">Status Audit</span>
                   <Badge className={verificationResult.is_valid ? 'bg-green-600' : 'bg-primary'}>
-                    {verificationResult.is_valid ? 'VALIDATED' : 'REJECTED'}
+                    {verificationResult.is_valid ? 'VALIDATED' : 'BULLSHIT_DETECTED'}
                   </Badge>
                 </div>
-                <div className="text-2xl font-black mb-2">SCORE: {verificationResult.integrity_score}</div>
-                <p className="text-xs text-zinc-300 italic">"{verificationResult.analysis}"</p>
+                <div className="flex items-center gap-2 mb-2">
+                   <TrendingDown size={14} className={verificationResult.is_valid ? 'text-green-500' : 'text-primary'} />
+                   <span className="text-2xl font-black">SCORE: {verificationResult.integrity_score}</span>
+                </div>
+                <p className="text-[11px] text-zinc-300 italic leading-relaxed">
+                  Analisis: "{verificationResult.analysis}"
+                </p>
               </div>
-              <p className="text-sm font-bold text-white">{verificationResult.resolution_message}</p>
+              <div className="p-3 bg-white/5 border border-white/5 rounded">
+                <p className="text-sm font-bold text-white text-center italic">
+                  "{verificationResult.resolution_message}"
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              <label className="text-[10px] text-zinc-500 uppercase">Jelaskan apa yang Anda lakukan secara teknis (Min. 10 Kata):</label>
-              <Textarea 
-                placeholder="Contoh: 'Sudah deploy 5 baris script automasi ke server prod...'"
-                value={proofText}
-                onChange={(e) => setProofText(e.target.value)}
-                disabled={isProcessing}
-                className="bg-black border-zinc-800 text-sm h-32 resize-none"
-              />
-              <p className="text-[8px] text-primary italic uppercase tracking-widest">
-                AI_DETECTOR: AKTIF. Deteksi bullshit di level maksimal.
-              </p>
+              <div className="space-y-2">
+                <label className="text-[10px] text-zinc-500 uppercase font-bold">Bukti Eksekusi (Detail & Teknis):</label>
+                <Textarea 
+                  placeholder="Contoh: 'Sudah deploy 5 baris script automasi ke server prod, meningkatkan throughput 20%...'"
+                  value={proofText}
+                  onChange={(e) => setProofText(e.target.value)}
+                  disabled={isProcessing}
+                  className="bg-black border-zinc-800 text-xs h-32 resize-none focus:border-primary transition-colors"
+                />
+              </div>
+              <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded">
+                <AlertCircle size={14} className="text-primary mt-0.5 shrink-0" />
+                <p className="text-[9px] text-zinc-400 uppercase leading-relaxed font-bold">
+                  Peringatan: AI Analisgelap skeptis terhadap klaim emosional. Berikan data atau detail riil.
+                </p>
+              </div>
             </div>
           )}
 
@@ -215,10 +243,18 @@ export function ActiveCommandsList() {
             {!verificationResult && (
               <Button 
                 onClick={handleVerifySubmission}
-                disabled={isProcessing || proofText.trim().split(/\s+/).length < 3}
-                className="w-full bg-white text-black hover:bg-primary hover:text-white font-bold uppercase text-xs tracking-widest"
+                disabled={isProcessing || proofText.trim().length < 15}
+                className="w-full bg-white text-black hover:bg-primary hover:text-white font-bold uppercase text-xs tracking-widest transition-all h-12"
               >
-                {isProcessing ? <Loader2 className="animate-spin" /> : <>KIRIM BUKTI <Send size={14} className="ml-2" /></>}
+                {isProcessing ? <Loader2 className="animate-spin" /> : <>SUBMIT FOR AUDIT <Send size={14} className="ml-2" /></>}
+              </Button>
+            )}
+            {verificationResult && !verificationResult.is_valid && (
+              <Button 
+                onClick={() => setVerificationResult(null)}
+                className="w-full bg-primary text-white font-bold uppercase text-xs tracking-widest h-12"
+              >
+                COBA LAGI (JUJUR)
               </Button>
             )}
           </DialogFooter>
