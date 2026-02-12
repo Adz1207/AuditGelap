@@ -115,7 +115,7 @@ export const PricingTable = () => {
 
       if (window.snap) {
         window.snap.pay(token, {
-          onSuccess: async (result: any) => {
+          onSuccess: (result: any) => {
             const userRef = doc(firestore, 'users', user.uid);
             const updateData = {
               role: plan.id,
@@ -136,7 +136,7 @@ export const PricingTable = () => {
 
             toast({ 
               title: "PENEBUSAN BERHASIL", 
-              description: `Akses ${plan.name} diaktifkan. Jangan sia-siakan uang Anda.` 
+              description: `PROTOKOL_${plan.name.toUpperCase()}_AKTIF. Jangan sia-siakan uang Anda kali ini.` 
             });
             
             setTimeout(() => {
@@ -146,14 +146,14 @@ export const PricingTable = () => {
           onPending: () => {
             toast({ 
               title: "MENUNGGU EKSEKUSI", 
-              description: "Selesaikan pembayaran Anda. Waktu penundaan terus berjalan." 
+              description: "Selesaikan pembayaran Anda. Waktu penundaan terus dihitung." 
             });
             setLoadingPlan(null);
           },
           onError: () => {
             toast({ 
               title: "TRANSAKSI GAGAL", 
-              description: "Protokol pembayaran ditolak. Coba lagi atau akui kegagalan Anda.", 
+              description: "Protokol pembayaran ditolak. Alasan Anda menang lagi bahkan sebelum mulai. Coba lagi atau akui kekalahan Anda.", 
               variant: "destructive" 
             });
             setLoadingPlan(null);
@@ -166,7 +166,7 @@ export const PricingTable = () => {
     } catch (error) {
       toast({
         title: "KESALAHAN SISTEM",
-        description: "Gagal memproses inisialisasi pembayaran.",
+        description: "Gagal memproses inisialisasi pembayaran. Hubungi administrator protokol.",
         variant: "destructive"
       });
       setLoadingPlan(null);
