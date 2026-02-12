@@ -7,12 +7,17 @@ import midtransClient from 'midtrans-client';
  * This ensures that API keys are present before the system attempts to process redemption payments.
  */
 export const getMidtransClient = () => {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
+  // Prevent client-side execution
+  if (typeof window !== 'undefined') {
+    return null as any;
+  }
+
+  const serverKey = process.env['MIDTRANS_SERVER_KEY'];
+  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
   // Audit: Ensure keys are not empty or undefined
   if (!serverKey || !clientKey) {
-    console.error("KRITIS: MIDTRANS_SERVER_KEY atau CLIENT_KEY tidak ditemukan di Environment Variables.");
+    console.error("KRITIS: MIDTRANS_SERVER_KEY atau NEXT_PUBLIC_MIDTRANS_CLIENT_KEY tidak ditemukan di Environment Variables.");
     // In a real production environment, we throw to prevent silent failures
     if (process.env.NODE_ENV === 'production') {
       throw new Error("Sistem Gagal: Kunci API Midtrans tidak terkonfigurasi.");
@@ -26,7 +31,3 @@ export const getMidtransClient = () => {
   });
 };
 
-/**
- * Singleton instance for the Midtrans Snap client.
- */
-export const snap = getMidtransClient();

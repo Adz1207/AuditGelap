@@ -7,6 +7,12 @@ import { getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
+  // Guard: Do not initialize if API key is missing
+  if (!firebaseConfig.apiKey) {
+    console.warn("Firebase initialization skipped: Missing API Key");
+    return null;
+  }
+
   if (!getApps().length) {
     // Important! initializeApp() is called without any arguments because Firebase App Hosting
     // integrates with the initializeApp() function to provide the environment variables needed to
