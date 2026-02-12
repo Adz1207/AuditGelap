@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react';
@@ -84,15 +85,15 @@ export const PricingTable = () => {
     }
   ];
 
-  const handlePaymentResult = async (result: any, status: 'success' | 'pending' | 'error', plan: typeof plans[0]) => {
+  const handlePaymentResult = async (result: any, status: 'success' | 'pending' | 'error', planId: string) => {
     if (!user || !firestore) return;
 
     if (status === 'success') {
       const userRef = doc(firestore, 'users', user.uid);
       const updateData = {
-        role: plan.id,
+        role: planId,
         isPremium: true,
-        'subscription.planId': plan.id,
+        'subscription.planId': planId,
         'subscription.status': 'active',
         'subscription.currentPeriodEnd': Date.now() + (30 * 24 * 60 * 60 * 1000),
         'subscription.midtransOrderId': result.order_id
@@ -100,11 +101,7 @@ export const PricingTable = () => {
 
       try {
         await updateDoc(userRef, updateData);
-        toast({ 
-          title: "PENEBUSAN BERHASIL", 
-          description: `PROTOKOL_${plan.name.toUpperCase()}_AKTIF. Sinkronisasi database selesai.` 
-        });
-        router.push(`/payment-success?orderId=${result.order_id}&amount=${plan.price}`);
+        window.location.href = `/audit/success?order_id=${result.order_id}`;
       } catch (e) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: userRef.path,
@@ -119,13 +116,7 @@ export const PricingTable = () => {
       });
       setLoadingPlan(null);
     } else if (status === 'error') {
-      toast({ 
-        title: "PENEBUSAN GAGAL", 
-        description: "Sistem mendeteksi kegagalan transaksi. Jangan biarkan ini jadi alasan penundaan Anda.", 
-        variant: "destructive" 
-      });
-      router.push('/payment-failed');
-      setLoadingPlan(null);
+      window.location.href = '/audit/failure';
     }
   };
 
@@ -162,11 +153,15 @@ export const PricingTable = () => {
 
       if (window.snap) {
         window.snap.pay(token, {
-          onSuccess: (result: any) => handlePaymentResult(result, 'success', plan),
-          onPending: (result: any) => handlePaymentResult(result, 'pending', plan),
-          onError: (result: any) => handlePaymentResult(result, 'error', plan),
+          onSuccess: (result: any) => handlePaymentResult(result, 'success', plan.id),
+          onPending: (result: any) => handlePaymentResult(result, 'pending', plan.id),
+          onError: (result: any) => {
+            console.error("Payment Failed", result);
+            window.location.href = '/audit/failure';
+          },
           onClose: () => {
             setLoadingPlan(null);
+            alert("Anda menutup jendela pembayaran. Melarikan diri tidak akan menghentikan counter kerugian.");
           }
         });
       }
