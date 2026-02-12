@@ -17,7 +17,7 @@ export function AuditContainer() {
   const firestore = useFirestore();
   const [loading, setLoading] = useState(false);
   const [auditData, setAuditData] = useState<AuditOutput | null>(null);
-  const [currentSituation, setCurrentSituation] = useState<string>('');
+  const [lastInput, setLastInput] = useState<any>(null);
   const [langUsed, setLangUsed] = useState<'Indonesian' | 'English'>('Indonesian');
   const { toast } = useToast();
 
@@ -25,17 +25,26 @@ export function AuditContainer() {
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userData } = useDoc(userRef);
 
-  const handleAudit = async (situation: string, lang: 'Indonesian' | 'English') => {
+  const handleAudit = async (formData: { 
+    projectName: string, 
+    estimatedValue: number, 
+    sabotageType: string, 
+    details: string, 
+    lang: 'Indonesian' | 'English' 
+  }) => {
     setLoading(true);
     setAuditData(null);
-    setLangUsed(lang);
-    setCurrentSituation(situation);
+    setLangUsed(formData.lang);
+    setLastInput(formData);
     
     try {
       const isPremium = userData?.isPremium || false;
       const result = await generateAuditAndInsights({ 
-        situationDetails: situation,
-        langPreference: lang,
+        projectName: formData.projectName,
+        estimatedValue: formData.estimatedValue,
+        sabotageType: formData.sabotageType,
+        situationDetails: formData.details,
+        langPreference: formData.lang,
         isPremiumUser: isPremium
       });
       
@@ -46,7 +55,13 @@ export function AuditContainer() {
         const auditLogRef = doc(collection(firestore, 'users', user.uid, 'audit_logs'));
         const auditLogData = {
           userId: user.uid,
-          input: { situationDetails: situation, langPreference: lang },
+          input: { 
+            projectName: formData.projectName,
+            estimatedValue: formData.estimatedValue,
+            sabotageType: formData.sabotageType,
+            situationDetails: formData.details, 
+            langPreference: formData.lang 
+          },
           output: result,
           type: result.type,
           timestamp: Date.now()
@@ -111,8 +126,8 @@ export function AuditContainer() {
   };
 
   const handleRefreshProtocol = () => {
-    if (currentSituation) {
-      handleAudit(currentSituation, langUsed);
+    if (lastInput) {
+      handleAudit(lastInput);
       toast({
         title: "SYNCHRONIZING PROTOCOL",
         description: "Memverifikasi status penebusan dan membuka akses data...",
@@ -123,18 +138,18 @@ export function AuditContainer() {
   // Automate Re-fetch on payment success signal
   useEffect(() => {
     const handleRedemptionSignal = () => {
-      if (currentSituation && auditData?.isLocked) {
-        handleAudit(currentSituation, langUsed);
+      if (lastInput && auditData?.isLocked) {
+        handleAudit(lastInput);
       }
     };
 
     window.addEventListener('redemption-success', handleRedemptionSignal);
     return () => window.removeEventListener('redemption-success', handleRedemptionSignal);
-  }, [currentSituation, langUsed, auditData?.isLocked]);
+  }, [lastInput, auditData?.isLocked]);
 
   return (
     <div className="space-y-12">
-      <AuditForm onSubmit={handleAudit} isLoading={loading} />
+      {!auditData && !loading && <AuditForm onSubmit={handleAudit} isLoading={loading} />}
       
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -146,12 +161,25 @@ export function AuditContainer() {
       )}
 
       {auditData && (
-        <AuditResults 
-          data={auditData} 
-          lang={langUsed} 
-          onRefresh={handleRefreshProtocol}
-          isRefreshing={loading}
-        />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+           <AuditResults 
+            data={auditData} 
+            lang={langUsed} 
+            onRefresh={handleRefreshProtocol}
+            isRefreshing={loading}
+          />
+          <div className="mt-8 text-center">
+            <button 
+              onClick={() => {
+                setAuditData(null);
+                setLastInput(null);
+              }}
+              className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-[0.3em] transition-colors"
+            >
+              Reset Interface // Mulai Audit Baru
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

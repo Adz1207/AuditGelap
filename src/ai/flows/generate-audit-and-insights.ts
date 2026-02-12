@@ -14,6 +14,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AuditInputSchema = z.object({
+  projectName: z.string().describe('The name of the project being procrastinated.'),
+  estimatedValue: z.number().describe('The user\'s perceived value of the project or time lost.'),
+  sabotageType: z.string().describe('The type of self-sabotage identified by the user.'),
   situationDetails: z
     .string()
     .describe('Detailed description of the user\'s current situation.'),
@@ -58,7 +61,10 @@ const auditPrompt = ai.definePrompt({
   input: {schema: AuditInputSchema},
   output: {schema: AuditOutputSchema},
   prompt: `[OUTPUT_LANGUAGE: {{{langPreference}}}] 
-User Input: {{{situationDetails}}}
+Project: {{{projectName}}}
+Estimated Value/Loss: Rp {{{estimatedValue}}}
+Sabotage Type: {{{sabotageType}}}
+Situation Details: {{{situationDetails}}}
 User Premium Status: {{#if isPremiumUser}}REDEEMED (PREMIUM){{else}}BYSTANDER (FREE){{/if}}
 
 Role: Analisgelap (Chief Reality Auditor & Brutal Logic Gate).
@@ -69,7 +75,7 @@ LOGIC GATE PROTOCOL:
 2. TONE: Authoritative, Technical, and Sharp.
 3. OUTPUT: 
    - diagnosis_title: Critical and Technical.
-   - brutal_diagnosis: Deep architectural critique of the user's systemic failures.
+   - brutal_diagnosis: Deep architectural critique of why "{{{projectName}}}" is failing due to {{{sabotageType}}}.
    - strategic_commands: 3-4 high-specificity technical tasks with clear metrics.
    - type: "deep_audit"
    - isLocked: false
@@ -78,23 +84,20 @@ LOGIC GATE PROTOCOL:
 2. TONE: Mocking, Provocative, and Dismissive.
 3. OUTPUT:
    - diagnosis_title: Provocative and Mocking.
-   - brutal_diagnosis: Brutal roasting. Attack their ego, procrastination, and lack of commitment.
+   - brutal_diagnosis: Brutal roasting focusing on {{{sabotageType}}}. Attack their ego and their "{{{projectName}}}" delusion.
    - strategic_commands: ["PROTOKOL TERKUNCI: Tebus dosa Anda (Upgrade) untuk mengakses perintah eksekusi strategis."]
    - type: "standard"
    - isLocked: true
-4. CONSTRAINT: Do NOT provide any actual advice, solutions, or helpful steps. Keep the user in the dark. Pure roasting only.
+4. CONSTRAINT: Do NOT provide any actual advice, solutions, or helpful steps. Pure roasting only.
 {{/if}}
 
 Social Share Protocol:
 - social_share_roast: Berikan 1 kalimat 'Social Media Ready' yang membuat user merasa malu tapi ingin memamerkannya karena estetika gelapnya. Maksimal 20 kata. Tanpa emoji. Tanpa basa-basi. 
 
-Calculation Logic (Required for all):
-1. Dream Monthly Income Estimation based on context.
-2. Months of stagnation Estimation.
-3. Absolute Loss = Dream Income * Months.
-4. Momentum Loss = Absolute Loss * 0.1 (Competitive Decay).
-5. opportunity_cost_idr = Absolute Loss + Momentum Loss.
-6. growth_loss_percentage = (Months / 480) * 100.
+Calculation Logic:
+1. Use the estimatedValue {{{estimatedValue}}} as a baseline.
+2. Factor in the {{{sabotageType}}} as a multiplier for momentum loss.
+3. growth_loss_percentage = estimatedValue based on a career lifetime value calculation.
 `,
 });
 
