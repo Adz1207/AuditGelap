@@ -1,3 +1,4 @@
+
 'use server';
 
 import { snap } from '@/lib/midtrans';
@@ -58,6 +59,7 @@ export async function createPaymentTransaction(input: CreateTransactionInput) {
     };
   } catch (error: any) {
     console.error("MIDTRANS_TRANSACTION_ERROR:", error);
-    throw new Error("Gagal menginisialisasi protokol pembayaran. Sistem terganggu.");
+    // Return a structured error message that implies user/system failure
+    throw new Error("Gagal menginisialisasi protokol pembayaran. Sistem terganggu. Periksa Environment Variables atau koneksi dashboard.");
   }
 }
