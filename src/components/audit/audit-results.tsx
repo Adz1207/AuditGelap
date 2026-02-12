@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck, Lock } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck, Lock, RefreshCcw, Loader2 } from 'lucide-react';
 import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import TypewriterEffect from '@/components/ui/typewriter-effect';
 import { RedemptionCounter } from './redemption-counter';
@@ -13,9 +14,11 @@ import { cn } from '@/lib/utils';
 interface AuditResultsProps {
   data: AuditOutput;
   lang: 'Indonesian' | 'English';
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export function AuditResults({ data, lang }: AuditResultsProps) {
+export function AuditResults({ data, lang, onRefresh, isRefreshing }: AuditResultsProps) {
   const [time, setTime] = useState<string | null>(null);
   const [isResolved, setIsResolved] = useState(false);
   const router = useRouter();
@@ -25,7 +28,6 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
   }, []);
 
   const handleUnlockProtocol = () => {
-    // Redirect to the pricing section on the landing page
     router.push('/#pricing');
   };
 
@@ -60,13 +62,27 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
               : "Klik di bawah untuk menghentikan timer kerugian:"}
           </p>
           {data.isLocked ? (
-            <Button 
-              onClick={handleUnlockProtocol}
-              className="w-full max-w-xs bg-primary text-white hover:bg-primary/90 font-black uppercase text-xs tracking-[0.2em] h-12 transition-all group shadow-[0_0_20px_rgba(139,0,0,0.3)]"
-            >
-              BUKA PROTOKOL EKSEKUSI
-              <Lock size={16} className="ml-2 group-hover:scale-110 transition-transform" />
-            </Button>
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <Button 
+                onClick={handleUnlockProtocol}
+                className="w-full bg-primary text-white hover:bg-primary/90 font-black uppercase text-xs tracking-[0.2em] h-12 transition-all group shadow-[0_0_20px_rgba(139,0,0,0.3)]"
+              >
+                BUKA PROTOKOL EKSEKUSI
+                <Lock size={16} className="ml-2 group-hover:scale-110 transition-transform" />
+              </Button>
+              
+              {onRefresh && (
+                <Button 
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  variant="outline"
+                  className="w-full border-zinc-800 text-zinc-500 hover:text-white hover:border-white text-[10px] uppercase font-bold h-10 tracking-widest"
+                >
+                  {isRefreshing ? <Loader2 size={14} className="animate-spin mr-2" /> : <RefreshCcw size={14} className="mr-2" />}
+                  Sinkronisasi Status Penebusan
+                </Button>
+              )}
+            </div>
           ) : (
             <Button 
               onClick={() => setIsResolved(true)}

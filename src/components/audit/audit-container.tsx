@@ -17,6 +17,7 @@ export function AuditContainer() {
   const firestore = useFirestore();
   const [loading, setLoading] = useState(false);
   const [auditData, setAuditData] = useState<AuditOutput | null>(null);
+  const [currentSituation, setCurrentSituation] = useState<string>('');
   const [langUsed, setLangUsed] = useState<'Indonesian' | 'English'>('Indonesian');
   const { toast } = useToast();
 
@@ -28,6 +29,7 @@ export function AuditContainer() {
     setLoading(true);
     setAuditData(null);
     setLangUsed(lang);
+    setCurrentSituation(situation);
     
     try {
       const isPremium = userData?.isPremium || false;
@@ -73,26 +75,28 @@ export function AuditContainer() {
           }));
         });
 
-        // Create Active Commands from the output
-        result.strategic_commands.forEach((task) => {
-          const commandRef = doc(collection(firestore, 'users', user.uid, 'active_commands'));
-          const commandData = {
-            userId: user.uid,
-            auditId: auditLogRef.id,
-            task: task,
-            deadline: Date.now() + (24 * 60 * 60 * 1000), // 24 hour deadline
-            status: 'pending',
-            isPremiumFeature: result.type === 'deep_audit'
-          };
+        // Create Active Commands from the output if not locked
+        if (!result.isLocked) {
+          result.strategic_commands.forEach((task) => {
+            const commandRef = doc(collection(firestore, 'users', user.uid, 'active_commands'));
+            const commandData = {
+              userId: user.uid,
+              auditId: auditLogRef.id,
+              task: task,
+              deadline: Date.now() + (24 * 60 * 60 * 1000), // 24 hour deadline
+              status: 'pending',
+              isPremiumFeature: result.type === 'deep_audit'
+            };
 
-          setDoc(commandRef, commandData).catch(async () => {
-             errorEmitter.emit('permission-error', new FirestorePermissionError({
-              path: commandRef.path,
-              operation: 'create',
-              requestResourceData: commandData
-            }));
+            setDoc(commandRef, commandData).catch(async () => {
+               errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: commandRef.path,
+                operation: 'create',
+                requestResourceData: commandData
+              }));
+            });
           });
-        });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -103,6 +107,16 @@ export function AuditContainer() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshProtocol = () => {
+    if (currentSituation) {
+      handleAudit(currentSituation, langUsed);
+      toast({
+        title: "SYNCHRONIZING PROTOCOL",
+        description: "Memverifikasi status penebusan dan membuka akses data...",
+      });
     }
   };
 
@@ -119,7 +133,14 @@ export function AuditContainer() {
         </div>
       )}
 
-      {auditData && <AuditResults data={auditData} lang={langUsed} />}
+      {auditData && (
+        <AuditResults 
+          data={auditData} 
+          lang={langUsed} 
+          onRefresh={handleRefreshProtocol}
+          isRefreshing={loading}
+        />
+      )}
     </div>
   );
 }
