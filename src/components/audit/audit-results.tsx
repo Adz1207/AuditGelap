@@ -1,9 +1,12 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck } from 'lucide-react';
 import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import TypewriterEffect from '@/components/ui/typewriter-effect';
+import { RedemptionCounter } from './redemption-counter';
+import { Button } from '@/components/ui/button';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -12,6 +15,7 @@ interface AuditResultsProps {
 
 export function AuditResults({ data, lang }: AuditResultsProps) {
   const [time, setTime] = useState<string | null>(null);
+  const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
     setTime(new Date().toLocaleTimeString());
@@ -35,6 +39,26 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
         </div>
       </div>
 
+      {/* Main Metric: Redemption Counter */}
+      <div className="mb-8">
+        <RedemptionCounter initialValue={data.opportunity_cost_idr} isResolved={isResolved} />
+      </div>
+
+      {!isResolved && (
+        <div className="mb-10 flex flex-col items-center gap-4">
+          <p className="text-[10px] text-zinc-500 uppercase tracking-widest animate-pulse">
+            Klik di bawah untuk menghentikan timer kerugian:
+          </p>
+          <Button 
+            onClick={() => setIsResolved(true)}
+            className="bg-white text-black hover:bg-primary hover:text-white font-black uppercase text-xs tracking-[0.2em] h-12 px-10 transition-all group"
+          >
+            HENTIKAN KEBOCORAN
+            <ShieldCheck size={16} className="ml-2 group-hover:scale-110 transition-transform" />
+          </Button>
+        </div>
+      )}
+
       {/* Diagnosis Title */}
       <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic terminal-text">
         <TypewriterEffect text={data.diagnosis_title} speed={0.05} />
@@ -44,17 +68,8 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
         "<TypewriterEffect text={data.brutal_diagnosis} speed={0.02} />"
       </div>
 
-      {/* Metrics Grid */}
+      {/* Secondary Metrics */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white/[0.02] border border-white/10 p-4 rounded shadow-inner group hover:border-primary/30 transition-colors">
-          <div className="flex items-center gap-2 text-primary mb-1">
-            <TrendingDown size={16} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Opportunity Cost</span>
-          </div>
-          <p className="text-xl font-bold text-white">
-            Rp {data.opportunity_cost_idr.toLocaleString('id-ID')}
-          </p>
-        </div>
         <div className="bg-white/[0.02] border border-white/10 p-4 rounded shadow-inner group hover:border-primary/30 transition-colors">
           <div className="flex items-center gap-2 text-primary mb-1">
             <AlertTriangle size={16} />
@@ -62,6 +77,15 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
           </div>
           <p className="text-xl font-bold text-white">
             -{data.growth_loss_percentage}%
+          </p>
+        </div>
+        <div className="bg-white/[0.02] border border-white/10 p-4 rounded shadow-inner group hover:border-primary/30 transition-colors">
+          <div className="flex items-center gap-2 text-primary mb-1">
+            <ShieldCheck size={16} />
+            <span className="text-[10px] uppercase font-bold tracking-wider">Audit Protocol</span>
+          </div>
+          <p className="text-xl font-bold text-white uppercase tracking-tighter">
+            {data.type}
           </p>
         </div>
       </div>
