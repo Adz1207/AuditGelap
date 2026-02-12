@@ -28,7 +28,13 @@ export function initializeFirebase() {
       if (process.env.NODE_ENV === "production") {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
       }
-      firebaseApp = initializeApp(firebaseConfig);
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+      } catch (e2) {
+        // Prevent build failures if config is missing/invalid during static generation
+        console.warn('Firebase fallback initialization failed (expected during build if env vars missing):', e2);
+        return null;
+      }
     }
 
     return getSdks(firebaseApp);
