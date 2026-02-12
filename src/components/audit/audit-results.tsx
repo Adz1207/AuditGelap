@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +6,9 @@ import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import TypewriterEffect from '@/components/ui/typewriter-effect';
 import { RedemptionCounter } from './redemption-counter';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { BlurredSolution } from './blurred-solution';
+import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -17,10 +18,16 @@ interface AuditResultsProps {
 export function AuditResults({ data, lang }: AuditResultsProps) {
   const [time, setTime] = useState<string | null>(null);
   const [isResolved, setIsResolved] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setTime(new Date().toLocaleTimeString());
   }, []);
+
+  const handleUnlockProtocol = () => {
+    // Redirect to the pricing section on the landing page
+    router.push('/#pricing');
+  };
 
   const langCode = lang === 'Indonesian' ? 'ID' : 'EN';
 
@@ -53,14 +60,13 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
               : "Klik di bawah untuk menghentikan timer kerugian:"}
           </p>
           {data.isLocked ? (
-            <Link href="/#pricing" className="w-full max-w-xs">
-              <Button 
-                className="w-full bg-primary text-white hover:bg-primary/90 font-black uppercase text-xs tracking-[0.2em] h-12 transition-all group shadow-[0_0_20px_rgba(139,0,0,0.3)]"
-              >
-                BUKA PROTOKOL EKSEKUSI
-                <Lock size={16} className="ml-2 group-hover:scale-110 transition-transform" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={handleUnlockProtocol}
+              className="w-full max-w-xs bg-primary text-white hover:bg-primary/90 font-black uppercase text-xs tracking-[0.2em] h-12 transition-all group shadow-[0_0_20px_rgba(139,0,0,0.3)]"
+            >
+              BUKA PROTOKOL EKSEKUSI
+              <Lock size={16} className="ml-2 group-hover:scale-110 transition-transform" />
+            </Button>
           ) : (
             <Button 
               onClick={() => setIsResolved(true)}
@@ -112,33 +118,28 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
         </div>
       </div>
 
-      {/* Commands */}
-      <div>
-        <h3 className="text-xs uppercase text-accent font-bold mb-3 flex items-center gap-2">
-          {data.isLocked ? <Lock size={14} className="text-primary" /> : <CheckCircle2 size={14} />}
-          Strategic Commands {data.isLocked && "(LOCKED)"}
+      {/* Commands Wrapper with Blurred Paywall */}
+      <BlurredSolution isLocked={data.isLocked} onUnlock={handleUnlockProtocol}>
+        <h3 className="text-xs uppercase text-accent font-bold mb-4 flex items-center gap-2">
+          <CheckCircle2 size={14} />
+          Strategic Commands
         </h3>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {data.strategic_commands.map((cmd, index) => (
             <li 
               key={index} 
-              className={cn(
-                "flex gap-3 text-sm border p-3 rounded group transition-all",
-                data.isLocked 
-                  ? "bg-primary/5 border-primary/10 opacity-60 grayscale cursor-not-allowed" 
-                  : "bg-accent/5 border-accent/10 hover:bg-accent/10"
-              )}
+              className="flex gap-4 text-sm bg-accent/5 border border-accent/10 p-4 rounded group hover:bg-accent/10 transition-all"
             >
-              <span className={data.isLocked ? "text-primary font-bold" : "text-accent font-bold"}>
+              <span className="text-accent font-black">
                 [{index + 1}]
               </span>
-              <span className={data.isLocked ? "text-zinc-500 italic" : "text-gray-300"}>
+              <span className="text-gray-300 font-mono">
                 {cmd}
               </span>
             </li>
           ))}
         </ul>
-      </div>
+      </BlurredSolution>
 
       {/* Footer Info */}
       <div className="mt-8 pt-4 border-t border-white/10 text-[9px] text-muted-foreground text-center uppercase tracking-[0.2em]">
@@ -146,8 +147,4 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
       </div>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
 }
