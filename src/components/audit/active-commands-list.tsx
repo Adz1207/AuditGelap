@@ -5,24 +5,26 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@
 import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Clock, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { CheckCircle2, Clock, AlertCircle, Loader2, ShieldCheck, Send, ShieldAlert } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { acknowledgeExecution } from '@/ai/flows/acknowledge-execution';
+import { verifyExecution, type VerifyExecutionOutput } from '@/ai/flows/verify-execution-flow';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Button } from '@/components/ui/button';
 
-/**
- * ActiveCommandsList Component
- * Manages the display and execution of actionable commands assigned to the user.
- * Plugs "productivity leaks" by marking tasks as completed.
- */
 export function ActiveCommandsList() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [completingId, setCompletingId] = useState<string | null>(null);
+  
+  const [verifyingCmd, setVerifyingCmd] = useState<{ id: string, task: string } | null>(null);
+  const [proofText, setProofText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<VerifyExecutionOutput | null>(null);
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userData } = useDoc(userRef);
@@ -37,45 +39,64 @@ export function ActiveCommandsList() {
 
   const { data: commands, isLoading } = useCollection(commandsQuery);
 
-  const handleComplete = async (cmdId: string, taskTitle: string) => {
-    if (!user || !firestore) return;
-    setCompletingId(cmdId);
+  const handleOpenVerify = (cmdId: string, taskTitle: string) => {
+    setVerifyingCmd({ id: cmdId, task: taskTitle });
+    setProofText('');
+    setVerificationResult(null);
+  };
 
-    const cmdRef = doc(firestore, 'users', user.uid, 'active_commands', cmdId);
-    
-    // Non-blocking Firestore update for optimistic UI
-    // We update the status and record the completion timestamp
-    updateDoc(cmdRef, { 
-      status: 'completed',
-      completedAt: Date.now()
-    }).catch(async () => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: cmdRef.path,
-        operation: 'update',
-        requestResourceData: { status: 'completed' }
-      }));
-    });
+  const handleVerifySubmission = async () => {
+    if (!user || !firestore || !verifyingCmd || proofText.trim().length < 5) return;
+    setIsProcessing(true);
 
     try {
-      // Call Genkit flow for a cold, sharp appreciation message
-      const { message } = await acknowledgeExecution({
-        taskTitle,
+      const result = await verifyExecution({
+        taskTitle: verifyingCmd.task,
+        executionProof: proofText,
         userName: userData?.name || 'User',
       });
 
-      toast({
-        title: "EKSEKUSI DICATAT",
-        description: message || "Eksekusi tercatat. Berhenti merasa puas, lanjut ke tugas berikutnya.",
-      });
+      setVerificationResult(result);
+
+      if (result.is_valid) {
+        const cmdRef = doc(firestore, 'users', user.uid, 'active_commands', verifyingCmd.id);
+        
+        updateDoc(cmdRef, { 
+          status: 'completed',
+          completedAt: Date.now(),
+          integrityScore: result.integrity_score,
+          proof: proofText
+        }).catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: cmdRef.path,
+            operation: 'update',
+            requestResourceData: { status: 'completed' }
+          }));
+        });
+
+        toast({
+          title: "INTEGRITAS TERVERIFIKASI",
+          description: result.resolution_message,
+        });
+        
+        // Close dialog after a short delay to show result
+        setTimeout(() => setVerifyingCmd(null), 3000);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "DETEKSI BULLSHIT",
+          description: result.resolution_message,
+        });
+      }
     } catch (error) {
-      console.error("AI_ACKNOWLEDGEMENT_FAILURE:", error);
+      console.error("VERIFICATION_FAILURE:", error);
       toast({
         variant: "destructive",
         title: "KESALAHAN SISTEM",
-        description: "Gagal memproses pengakuan AI. Namun, eksekusi fisik Anda tetap tersimpan di arsip.",
+        description: "Gagal memproses verifikasi integrity.",
       });
     } finally {
-      setCompletingId(null);
+      setIsProcessing(false);
     }
   };
 
@@ -121,7 +142,7 @@ export function ActiveCommandsList() {
                       {cmd.status === 'pending' ? (
                         <>Deadline: {formatDistanceToNow(cmd.deadline, { addSuffix: true, locale: id })}</>
                       ) : cmd.status === 'completed' ? (
-                        <>Berhasil Dieksekusi</>
+                        <>Integritas: {cmd.integrityScore}%</>
                       ) : (
                         <>Kegagalan Sistemik</>
                       )}
@@ -135,22 +156,74 @@ export function ActiveCommandsList() {
 
               {cmd.status === 'pending' && (
                 <button 
-                  onClick={() => handleComplete(cmd.id, cmd.task)}
-                  disabled={completingId === cmd.id}
-                  className="bg-accent/10 hover:bg-accent/20 text-accent p-2 rounded transition-all group disabled:opacity-50 hover:scale-105 active:scale-95"
-                  title="Tandai Selesai"
+                  onClick={() => handleOpenVerify(cmd.id, cmd.task)}
+                  className="bg-accent/10 hover:bg-accent/20 text-accent p-2 rounded transition-all group hover:scale-105 active:scale-95"
+                  title="Verifikasi Eksekusi"
                 >
-                  {completingId === cmd.id ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={18} className="group-hover:text-green-500 transition-colors" />
-                  )}
+                  <CheckCircle2 size={18} className="group-hover:text-green-500 transition-colors" />
                 </button>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Verification Dialog */}
+      <Dialog open={!!verifyingCmd} onOpenChange={() => !isProcessing && setVerifyingCmd(null)}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white font-mono">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-tighter flex items-center gap-2">
+              <ShieldAlert className="text-primary" />
+              Audit Integritas Eksekusi
+            </DialogTitle>
+            <DialogDescription className="text-zinc-500 text-[10px] uppercase">
+              Tugas: {verifyingCmd?.task}
+            </DialogDescription>
+          </DialogHeader>
+
+          {verificationResult ? (
+            <div className="space-y-4 py-4">
+              <div className={`p-4 border rounded ${verificationResult.is_valid ? 'border-green-900/50 bg-green-950/10' : 'border-primary/50 bg-primary/10'}`}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold uppercase">Status Audit</span>
+                  <Badge className={verificationResult.is_valid ? 'bg-green-600' : 'bg-primary'}>
+                    {verificationResult.is_valid ? 'VALIDATED' : 'REJECTED'}
+                  </Badge>
+                </div>
+                <div className="text-2xl font-black mb-2">SCORE: {verificationResult.integrity_score}</div>
+                <p className="text-xs text-zinc-300 italic">"{verificationResult.analysis}"</p>
+              </div>
+              <p className="text-sm font-bold text-white">{verificationResult.resolution_message}</p>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <label className="text-[10px] text-zinc-500 uppercase">Jelaskan apa yang Anda lakukan secara teknis (Min. 10 Kata):</label>
+              <Textarea 
+                placeholder="Contoh: 'Sudah deploy 5 baris script automasi ke server prod...'"
+                value={proofText}
+                onChange={(e) => setProofText(e.target.value)}
+                disabled={isProcessing}
+                className="bg-black border-zinc-800 text-sm h-32 resize-none"
+              />
+              <p className="text-[8px] text-primary italic uppercase tracking-widest">
+                AI_DETECTOR: AKTIF. Deteksi bullshit di level maksimal.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            {!verificationResult && (
+              <Button 
+                onClick={handleVerifySubmission}
+                disabled={isProcessing || proofText.trim().split(/\s+/).length < 3}
+                className="w-full bg-white text-black hover:bg-primary hover:text-white font-bold uppercase text-xs tracking-widest"
+              >
+                {isProcessing ? <Loader2 className="animate-spin" /> : <>KIRIM BUKTI <Send size={14} className="ml-2" /></>}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
