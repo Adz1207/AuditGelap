@@ -17,7 +17,6 @@ export function ResultCard({ data }: ResultCardProps) {
   const auditId = Math.floor(Math.random() * 99999).toString().padStart(5, '0');
   
   // Simulated Integrity Score for the audit based on growth loss vs cost
-  // In a real scenario, this would be returned by the AI
   const integrityScore = Math.max(15, 100 - Math.floor(data.growth_loss_percentage * 2));
 
   return (
@@ -57,7 +56,7 @@ export function ResultCard({ data }: ResultCardProps) {
 
       <div className="bg-zinc-900/50 p-4 border border-zinc-800 mb-6">
         <p className="text-zinc-400 text-[11px] italic leading-relaxed">
-          "{data.brutal_diagnosis.length > 120 ? data.brutal_diagnosis.substring(0, 120) + '...' : data.brutal_diagnosis}"
+          "{data.social_share_roast || data.brutal_diagnosis.substring(0, 80) + '...'}"
         </p>
       </div>
 

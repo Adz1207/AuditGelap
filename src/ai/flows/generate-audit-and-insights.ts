@@ -33,6 +33,9 @@ const AuditOutputSchema = z.object({
     .string()
     .describe('Short label (3-5 words) for the diagnosis.'),
   brutal_diagnosis: z.string().describe('Detailed critique of the situation.'),
+  social_share_roast: z
+    .string()
+    .describe('A 20-word max sharp sentence for social sharing.'),
   opportunity_cost_idr: z
     .number()
     .describe('Total Cost of Inaction (COI) in IDR.'),
@@ -81,6 +84,9 @@ LOGIC GATE PROTOCOL:
    - isLocked: true
 4. CONSTRAINT: Do NOT provide any actual advice, solutions, or helpful steps. Keep the user in the dark. Pure roasting only.
 {{/if}}
+
+Social Share Protocol:
+- social_share_roast: Berikan 1 kalimat 'Social Media Ready' yang membuat user merasa malu tapi ingin memamerkannya karena estetika gelapnya. Maksimal 20 kata. Tanpa emoji. Tanpa basa-basi. 
 
 Calculation Logic (Required for all):
 1. Dream Monthly Income Estimation based on context.
