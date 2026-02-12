@@ -3,11 +3,30 @@
 import midtransClient from 'midtrans-client';
 
 /**
- * Midtrans Snap client initialization.
- * Using environment variables for security.
+ * Audit: Strict initialization of the Midtrans Snap client.
+ * This ensures that API keys are present before the system attempts to process redemption payments.
  */
-export const snap = new midtransClient.Snap({
-  isProduction: false, // Set to true for production
-  serverKey: process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-YOUR_KEY',
-  clientKey: process.env.MIDTRANS_CLIENT_KEY || 'SB-Mid-client-YOUR_KEY'
-});
+export const getMidtransClient = () => {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
+
+  // Audit: Ensure keys are not empty or undefined
+  if (!serverKey || !clientKey) {
+    console.error("KRITIS: MIDTRANS_SERVER_KEY atau CLIENT_KEY tidak ditemukan di Environment Variables.");
+    // In a real production environment, we throw to prevent silent failures
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error("Sistem Gagal: Kunci API Midtrans tidak terkonfigurasi.");
+    }
+  }
+
+  return new midtransClient.Snap({
+    isProduction: process.env.NODE_ENV === 'production',
+    serverKey: serverKey || 'SB-Mid-server-STUB',
+    clientKey: clientKey || 'SB-Mid-client-STUB'
+  });
+};
+
+/**
+ * Singleton instance for the Midtrans Snap client.
+ */
+export const snap = getMidtransClient();
