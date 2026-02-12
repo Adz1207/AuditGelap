@@ -14,7 +14,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Play, Languages, ArrowRight, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { Play, Languages, ArrowRight, ArrowLeft, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 interface AuditFormProps {
@@ -61,6 +61,7 @@ const ONBOARDING_STEPS = [
 
 export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   const [step, setStep] = useState(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     projectName: '',
     estimatedValue: 0,
@@ -72,7 +73,42 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
   const currentStep = ONBOARDING_STEPS[step];
 
+  const validateInput = () => {
+    const evasionWords = ["gak ada", "nothing", "tidak tahu", "lupa", "test", "halo", "asdf", "qwerty", "coba", "testing"];
+    
+    if (currentStep.id === 'project') {
+      if (formData.projectName.trim().length < 3) {
+        return "Nama proyek terlalu singkat. Sebutkan setidaknya 3 karakter.";
+      }
+    }
+    
+    if (currentStep.id === 'value') {
+      if (formData.estimatedValue <= 0) {
+        return "Kerugian tidak mungkin nol. Jujurlah pada diri sendiri.";
+      }
+    }
+
+    if (currentStep.id === 'details') {
+      if (formData.details.trim().length < 15) {
+        return "Terlalu singkat. Jangan pelit berbagi kegagalan jika Anda serius ingin menebusnya.";
+      }
+      const isEvasion = evasionWords.some(word => formData.details.toLowerCase().includes(word));
+      if (isEvasion) {
+        return "Sistem mendeteksi upaya pelarian dari realitas. Tuliskan masalah yang sebenarnya.";
+      }
+    }
+    
+    return null;
+  };
+
   const handleNext = () => {
+    const error = validateInput();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+
+    setValidationError(null);
     if (step < ONBOARDING_STEPS.length - 1) {
       setStep(step + 1);
     } else {
@@ -81,20 +117,14 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   };
 
   const handleBack = () => {
+    setValidationError(null);
     if (step > 0) setStep(step - 1);
-  };
-
-  const isNextDisabled = () => {
-    if (currentStep.id === 'project') return formData.projectName.trim().length < 3;
-    if (currentStep.id === 'value') return formData.estimatedValue <= 0;
-    if (currentStep.id === 'details') return formData.details.trim().length < 15;
-    return false;
   };
 
   return (
     <Card className="border-white/5 bg-white/[0.02] overflow-hidden max-w-xl mx-auto">
       <CardContent className="p-0">
-        <div className="p-6 space-y-8 min-h-[400px] flex flex-col justify-between">
+        <div className="p-6 space-y-8 min-h-[450px] flex flex-col justify-between">
           
           {/* Progress & Header */}
           <div className="space-y-4">
@@ -142,7 +172,10 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                     autoFocus
                     placeholder={currentStep.placeholder}
                     value={formData.projectName}
-                    onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                    onChange={(e) => {
+                      setValidationError(null);
+                      setFormData({ ...formData, projectName: e.target.value });
+                    }}
                     className="bg-black border-zinc-800 focus:border-primary h-12 text-sm font-mono"
                   />
                 )}
@@ -155,7 +188,10 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                       autoFocus
                       placeholder={currentStep.placeholder}
                       value={formData.estimatedValue || ''}
-                      onChange={(e) => setFormData({ ...formData, estimatedValue: Number(e.target.value) })}
+                      onChange={(e) => {
+                        setValidationError(null);
+                        setFormData({ ...formData, estimatedValue: Number(e.target.value) });
+                      }}
                       className="bg-black border-zinc-800 focus:border-primary h-12 pl-12 text-sm font-mono"
                     />
                   </div>
@@ -166,7 +202,10 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                     {currentStep.options?.map((opt) => (
                       <button
                         key={opt}
-                        onClick={() => setFormData({ ...formData, sabotageType: opt })}
+                        onClick={() => {
+                          setValidationError(null);
+                          setFormData({ ...formData, sabotageType: opt });
+                        }}
                         className={`p-4 border text-[10px] uppercase tracking-widest font-bold transition-all text-left rounded ${
                           formData.sabotageType === opt 
                             ? 'bg-primary/20 border-primary text-primary' 
@@ -184,10 +223,30 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                     autoFocus
                     placeholder={currentStep.placeholder}
                     value={formData.details}
-                    onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                    onChange={(e) => {
+                      setValidationError(null);
+                      setFormData({ ...formData, details: e.target.value });
+                    }}
                     className="bg-black border-zinc-800 focus:border-primary min-h-[150px] text-sm font-mono resize-none"
                   />
                 )}
+
+                {/* Validation Error Message */}
+                <AnimatePresence>
+                  {validationError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded"
+                    >
+                      <AlertTriangle size={14} className="text-primary mt-0.5 shrink-0" />
+                      <p className="text-[10px] text-zinc-300 font-mono uppercase tracking-tight leading-relaxed">
+                        {validationError}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -203,7 +262,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
             </button>
             <Button 
               onClick={handleNext}
-              disabled={isLoading || isNextDisabled()}
+              disabled={isLoading}
               className="bg-white text-black hover:bg-primary hover:text-white font-bold px-8 group uppercase text-[10px] tracking-widest h-12"
             >
               {step === ONBOARDING_STEPS.length - 1 ? 'EXECUTE_AUDIT' : 'Next Protocol'}
