@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import Script from 'next/script';
 import './globals.css';
@@ -27,9 +26,9 @@ export default function RootLayout({
           <div className="scan-line" />
           {children}
           <Toaster />
-          {/* Midtrans Snap Script */}
+          {/* Midtrans Snap Script - Loaded dynamically from environment */}
           <Script 
-            src="https://app.sandbox.midtrans.com/snap/snap.js" 
+            src={process.env.NEXT_PUBLIC_MIDTRANS_APP_URL || "https://app.sandbox.midtrans.com/snap/snap.js"} 
             data-client-key={process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-YOUR_KEY"}
             strategy="lazyOnload"
           />
