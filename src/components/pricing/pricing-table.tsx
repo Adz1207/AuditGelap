@@ -8,6 +8,7 @@ import { createPaymentTransaction } from '@/app/actions/payment';
 import { doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useRouter } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -19,6 +20,7 @@ export const PricingTable = () => {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const plans = [
@@ -84,7 +86,7 @@ export const PricingTable = () => {
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     if (plan.price === 0) {
-      window.location.href = '/audit';
+      router.push('/audit');
       return;
     }
 
@@ -140,8 +142,8 @@ export const PricingTable = () => {
             });
             
             setTimeout(() => {
-              window.location.href = '/audit';
-            }, 2000);
+              router.push(`/payment-success?orderId=${result.order_id}&amount=${plan.price}`);
+            }, 1000);
           },
           onPending: () => {
             toast({ 
