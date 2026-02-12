@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { 
   Select, 
   SelectContent, 
@@ -62,6 +62,8 @@ const ONBOARDING_STEPS = [
 export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   const [step, setStep] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const controls = useAnimation();
+  
   const [formData, setFormData] = useState({
     projectName: '',
     estimatedValue: 0,
@@ -73,18 +75,25 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
   const currentStep = ONBOARDING_STEPS[step];
 
+  const triggerShakeEffect = async () => {
+    await controls.start({
+      x: [-10, 10, -10, 10, 0],
+      transition: { duration: 0.4 }
+    });
+  };
+
   const validateInput = () => {
-    const evasionWords = ["gak ada", "nothing", "tidak tahu", "lupa", "test", "halo", "asdf", "qwerty", "coba", "testing"];
+    const evasionWords = ["gak ada", "nothing", "tidak tahu", "lupa", "test", "halo", "asdf", "qwerty", "coba", "testing", "asoy", "mantap"];
     
     if (currentStep.id === 'project') {
       if (formData.projectName.trim().length < 3) {
-        return "Nama proyek terlalu singkat. Sebutkan setidaknya 3 karakter.";
+        return "Nama proyek terlalu singkat. Sebutkan setidaknya 3 karakter untuk identifikasi.";
       }
     }
     
     if (currentStep.id === 'value') {
       if (formData.estimatedValue <= 0) {
-        return "Kerugian tidak mungkin nol. Jujurlah pada diri sendiri.";
+        return "Kerugian tidak mungkin nol. Jujurlah pada diri sendiri tentang harga waktu Anda.";
       }
     }
 
@@ -94,17 +103,18 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
       }
       const isEvasion = evasionWords.some(word => formData.details.toLowerCase().includes(word));
       if (isEvasion) {
-        return "Sistem mendeteksi upaya pelarian dari realitas. Tuliskan masalah yang sebenarnya.";
+        return "Sistem mendeteksi upaya pelarian dari realitas. Tuliskan konteks kegagalan yang sebenarnya.";
       }
     }
     
     return null;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const error = validateInput();
     if (error) {
       setValidationError(error);
+      triggerShakeEffect();
       return;
     }
 
@@ -122,7 +132,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
   };
 
   return (
-    <Card className="border-white/5 bg-white/[0.02] overflow-hidden max-w-xl mx-auto">
+    <Card className="border-white/5 bg-white/[0.02] overflow-hidden max-w-xl mx-auto shadow-2xl relative">
       <CardContent className="p-0">
         <div className="p-6 space-y-8 min-h-[450px] flex flex-col justify-between">
           
@@ -157,8 +167,8 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
+                animate={controls}
                 initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
@@ -167,7 +177,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                   {currentStep.q}
                 </h3>
 
-                {currentStep.type === 'text' && (
+                {currentStep.id === 'project' && (
                   <Input 
                     autoFocus
                     placeholder={currentStep.placeholder}
@@ -176,13 +186,14 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                       setValidationError(null);
                       setFormData({ ...formData, projectName: e.target.value });
                     }}
-                    className="bg-black border-zinc-800 focus:border-primary h-12 text-sm font-mono"
+                    onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                    className={`bg-black border-zinc-800 focus:border-primary h-12 text-sm font-mono ${validationError ? 'border-primary/50' : ''}`}
                   />
                 )}
 
-                {currentStep.type === 'number' && (
+                {currentStep.id === 'value' && (
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs">Rp</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs font-bold">Rp</span>
                     <Input 
                       type="number"
                       autoFocus
@@ -192,7 +203,8 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                         setValidationError(null);
                         setFormData({ ...formData, estimatedValue: Number(e.target.value) });
                       }}
-                      className="bg-black border-zinc-800 focus:border-primary h-12 pl-12 text-sm font-mono"
+                      onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                      className={`bg-black border-zinc-800 focus:border-primary h-12 pl-12 text-sm font-mono ${validationError ? 'border-primary/50' : ''}`}
                     />
                   </div>
                 )}
@@ -218,7 +230,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                   </div>
                 )}
 
-                {currentStep.type === 'textarea' && (
+                {currentStep.id === 'details' && (
                   <Textarea 
                     autoFocus
                     placeholder={currentStep.placeholder}
@@ -227,7 +239,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                       setValidationError(null);
                       setFormData({ ...formData, details: e.target.value });
                     }}
-                    className="bg-black border-zinc-800 focus:border-primary min-h-[150px] text-sm font-mono resize-none"
+                    className={`bg-black border-zinc-800 focus:border-primary min-h-[150px] text-sm font-mono resize-none ${validationError ? 'border-primary/50' : ''}`}
                   />
                 )}
 
@@ -238,10 +250,10 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded"
+                      className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded-sm"
                     >
                       <AlertTriangle size={14} className="text-primary mt-0.5 shrink-0" />
-                      <p className="text-[10px] text-zinc-300 font-mono uppercase tracking-tight leading-relaxed">
+                      <p className="text-[10px] text-zinc-300 font-mono uppercase tracking-tight leading-relaxed font-bold">
                         {validationError}
                       </p>
                     </motion.div>
@@ -263,7 +275,7 @@ export function AuditForm({ onSubmit, isLoading }: AuditFormProps) {
             <Button 
               onClick={handleNext}
               disabled={isLoading}
-              className="bg-white text-black hover:bg-primary hover:text-white font-bold px-8 group uppercase text-[10px] tracking-widest h-12"
+              className="bg-white text-black hover:bg-primary hover:text-white font-black px-8 group uppercase text-[10px] tracking-[0.2em] h-12"
             >
               {step === ONBOARDING_STEPS.length - 1 ? 'EXECUTE_AUDIT' : 'Next Protocol'}
               {step === ONBOARDING_STEPS.length - 1 ? <Play className="ml-2 w-3 h-3 fill-current" /> : <ArrowRight className="ml-2 w-3 h-3" />}
