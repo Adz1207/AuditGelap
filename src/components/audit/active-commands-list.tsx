@@ -1,17 +1,24 @@
-
 "use client";
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useState } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
+import { acknowledgeExecution } from '@/ai/flows/acknowledge-execution';
 
 export function ActiveCommandsList() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userData } = useDoc(userRef);
 
   const commandsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -23,10 +30,31 @@ export function ActiveCommandsList() {
 
   const { data: commands, isLoading } = useCollection(commandsQuery);
 
-  const handleComplete = (cmdId: string) => {
+  const handleComplete = async (cmdId: string, taskTitle: string) => {
     if (!user || !firestore) return;
-    const cmdRef = doc(firestore, 'users', user.uid, 'active_commands', cmdId);
-    updateDoc(cmdRef, { status: 'completed' });
+    setCompletingId(cmdId);
+
+    try {
+      const cmdRef = doc(firestore, 'users', user.uid, 'active_commands', cmdId);
+      
+      // Update Firestore
+      updateDoc(cmdRef, { status: 'completed' });
+
+      // Call AI for cold appreciation
+      const { message } = await acknowledgeExecution({
+        taskTitle,
+        userName: userData?.name || 'User',
+      });
+
+      toast({
+        title: "EKSEKUSI DICATAT",
+        description: message,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCompletingId(null);
+    }
   };
 
   if (isLoading) return <div className="animate-pulse h-20 bg-white/5 rounded-lg" />;
@@ -67,10 +95,15 @@ export function ActiveCommandsList() {
 
               {cmd.status === 'pending' && (
                 <button 
-                  onClick={() => handleComplete(cmd.id)}
-                  className="bg-accent/10 hover:bg-accent/20 text-accent p-2 rounded transition-colors group"
+                  onClick={() => handleComplete(cmd.id, cmd.task)}
+                  disabled={completingId === cmd.id}
+                  className="bg-accent/10 hover:bg-accent/20 text-accent p-2 rounded transition-colors group disabled:opacity-50"
                 >
-                  <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
+                  {completingId === cmd.id ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
+                  )}
                 </button>
               )}
             </CardContent>
