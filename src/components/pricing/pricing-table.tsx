@@ -101,7 +101,13 @@ export const PricingTable = () => {
 
       try {
         await updateDoc(userRef, updateData);
-        window.location.href = `/audit/success?order_id=${result.order_id}`;
+        // Dispatch custom event for automatic audit refresh
+        window.dispatchEvent(new CustomEvent('redemption-success', { detail: result }));
+        
+        toast({
+          title: "DENDA DIBAYAR",
+          description: "Protokol strategi telah dibuka secara otomatis.",
+        });
       } catch (e) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: userRef.path,
@@ -176,7 +182,7 @@ export const PricingTable = () => {
   };
 
   return (
-    <section className="bg-black py-24 px-4 font-mono border-t border-white/5">
+    <section id="pricing" className="bg-black py-24 px-4 font-mono border-t border-white/5">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 text-primary mb-4 border border-primary/20 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold">

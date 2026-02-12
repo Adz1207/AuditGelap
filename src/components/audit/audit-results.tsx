@@ -9,7 +9,6 @@ import { RedemptionCounter } from './redemption-counter';
 import { Button } from '@/components/ui/button';
 import { BlurredSolution } from './blurred-solution';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -28,7 +27,12 @@ export function AuditResults({ data, lang, onRefresh, isRefreshing }: AuditResul
   }, []);
 
   const handleUnlockProtocol = () => {
-    router.push('/#pricing');
+    const pricingEl = document.getElementById('pricing');
+    if (pricingEl) {
+      pricingEl.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      router.push('/#pricing');
+    }
   };
 
   const langCode = lang === 'Indonesian' ? 'ID' : 'EN';

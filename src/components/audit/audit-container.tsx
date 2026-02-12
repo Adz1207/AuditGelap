@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuditForm } from './audit-form';
 import { AuditResults } from './audit-results';
 import { generateAuditAndInsights, type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
@@ -119,6 +119,18 @@ export function AuditContainer() {
       });
     }
   };
+
+  // Automate Re-fetch on payment success signal
+  useEffect(() => {
+    const handleRedemptionSignal = () => {
+      if (currentSituation && auditData?.isLocked) {
+        handleAudit(currentSituation, langUsed);
+      }
+    };
+
+    window.addEventListener('redemption-success', handleRedemptionSignal);
+    return () => window.removeEventListener('redemption-success', handleRedemptionSignal);
+  }, [currentSituation, langUsed, auditData?.isLocked]);
 
   return (
     <div className="space-y-12">
