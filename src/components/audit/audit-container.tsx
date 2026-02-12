@@ -4,13 +4,13 @@
 import { useState, useEffect } from 'react';
 import { AuditForm } from './audit-form';
 import { AuditResults } from './audit-results';
+import { AuditScanning } from './audit-scanning';
 import { generateAuditAndInsights, type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, collection, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { Loader2 } from 'lucide-react';
 
 export function AuditContainer() {
   const { user } = useUser();
@@ -48,6 +48,9 @@ export function AuditContainer() {
         isPremiumUser: isPremium
       });
       
+      // Artificial delay to allow the AuditScanning animation to play through its sequence
+      await new Promise(resolve => setTimeout(resolve, 3500));
+      
       setAuditData(result);
 
       // Persist the audit log and commands if the user is authenticated
@@ -77,14 +80,14 @@ export function AuditContainer() {
         });
 
         // Update User Stats (Atomic increment)
-        const userRef = doc(firestore, 'users', user.uid);
+        const userUpdateRef = doc(firestore, 'users', user.uid);
         const statsUpdate = {
           'stats.totalAudits': increment(1),
           'stats.totalLossObserved': increment(result.opportunity_cost_idr)
         };
-        updateDoc(userRef, statsUpdate).catch(async () => {
+        updateDoc(userUpdateRef, statsUpdate).catch(async () => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: userRef.path,
+            path: userUpdateRef.path,
             operation: 'update',
             requestResourceData: statsUpdate
           }));
@@ -151,14 +154,7 @@ export function AuditContainer() {
     <div className="space-y-12">
       {!auditData && !loading && <AuditForm onSubmit={handleAudit} isLoading={loading} />}
       
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
-          <p className="font-mono text-sm uppercase tracking-widest text-primary animate-pulse">
-            Membedah Delusi... Memindai Penyesalan...
-          </p>
-        </div>
-      )}
+      {loading && <AuditScanning />}
 
       {auditData && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
