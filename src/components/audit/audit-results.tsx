@@ -2,11 +2,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck, Lock } from 'lucide-react';
 import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import TypewriterEffect from '@/components/ui/typewriter-effect';
 import { RedemptionCounter } from './redemption-counter';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -46,16 +47,29 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
 
       {!isResolved && (
         <div className="mb-10 flex flex-col items-center gap-4">
-          <p className="text-[10px] text-zinc-500 uppercase tracking-widest animate-pulse">
-            Klik di bawah untuk menghentikan timer kerugian:
+          <p className="text-[10px] text-zinc-500 uppercase tracking-widest animate-pulse text-center">
+            {data.isLocked 
+              ? "Protokol eksekusi terkunci. Sinkronkan denda untuk membuka jalan."
+              : "Klik di bawah untuk menghentikan timer kerugian:"}
           </p>
-          <Button 
-            onClick={() => setIsResolved(true)}
-            className="bg-white text-black hover:bg-primary hover:text-white font-black uppercase text-xs tracking-[0.2em] h-12 px-10 transition-all group"
-          >
-            HENTIKAN KEBOCORAN
-            <ShieldCheck size={16} className="ml-2 group-hover:scale-110 transition-transform" />
-          </Button>
+          {data.isLocked ? (
+            <Link href="/#pricing" className="w-full max-w-xs">
+              <Button 
+                className="w-full bg-primary text-white hover:bg-primary/90 font-black uppercase text-xs tracking-[0.2em] h-12 transition-all group shadow-[0_0_20px_rgba(139,0,0,0.3)]"
+              >
+                BUKA PROTOKOL EKSEKUSI
+                <Lock size={16} className="ml-2 group-hover:scale-110 transition-transform" />
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              onClick={() => setIsResolved(true)}
+              className="bg-white text-black hover:bg-primary hover:text-white font-black uppercase text-xs tracking-[0.2em] h-12 px-10 transition-all group"
+            >
+              HENTIKAN KEBOCORAN
+              <ShieldCheck size={16} className="ml-2 group-hover:scale-110 transition-transform" />
+            </Button>
+          )}
         </div>
       )}
 
@@ -101,14 +115,26 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
       {/* Commands */}
       <div>
         <h3 className="text-xs uppercase text-accent font-bold mb-3 flex items-center gap-2">
-          <CheckCircle2 size={14} />
-          Strategic Commands (Immediate Action)
+          {data.isLocked ? <Lock size={14} className="text-primary" /> : <CheckCircle2 size={14} />}
+          Strategic Commands {data.isLocked && "(LOCKED)"}
         </h3>
         <ul className="space-y-2">
           {data.strategic_commands.map((cmd, index) => (
-            <li key={index} className="flex gap-3 text-sm bg-accent/5 border border-accent/10 p-3 rounded group hover:bg-accent/10 transition-all">
-              <span className="text-accent font-bold">[{index + 1}]</span>
-              <span className="text-gray-300">{cmd}</span>
+            <li 
+              key={index} 
+              className={cn(
+                "flex gap-3 text-sm border p-3 rounded group transition-all",
+                data.isLocked 
+                  ? "bg-primary/5 border-primary/10 opacity-60 grayscale cursor-not-allowed" 
+                  : "bg-accent/5 border-accent/10 hover:bg-accent/10"
+              )}
+            >
+              <span className={data.isLocked ? "text-primary font-bold" : "text-accent font-bold"}>
+                [{index + 1}]
+              </span>
+              <span className={data.isLocked ? "text-zinc-500 italic" : "text-gray-300"}>
+                {cmd}
+              </span>
             </li>
           ))}
         </ul>
@@ -120,4 +146,8 @@ export function AuditResults({ data, lang }: AuditResultsProps) {
       </div>
     </div>
   );
+}
+
+function cn(...inputs: any[]) {
+  return inputs.filter(Boolean).join(" ");
 }

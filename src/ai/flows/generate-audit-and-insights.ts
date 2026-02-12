@@ -3,6 +3,7 @@
 
 /**
  * @fileOverview Generates an AI-powered audit with insights and strategic commands.
+ * Implements a "Logic Gate" to differentiate between FREE and PREMIUM output.
  *
  * - generateAuditAndInsights - A function that generates the audit and insights.
  * - AuditInput - The input type for the generateAuditAndInsights function.
@@ -41,6 +42,7 @@ const AuditOutputSchema = z.object({
   dark_analogy: z.string().describe('A metaphor for the situation.'),
   strategic_commands: z.array(z.string()).describe('Array of strategic commands.'),
   type: z.enum(['standard', 'deep_audit']).describe('The type of audit generated.'),
+  isLocked: z.boolean().describe('Whether strategic solutions are hidden behind a paywall.'),
 });
 export type AuditOutput = z.infer<typeof AuditOutputSchema>;
 
@@ -54,32 +56,39 @@ const auditPrompt = ai.definePrompt({
   output: {schema: AuditOutputSchema},
   prompt: `[OUTPUT_LANGUAGE: {{{langPreference}}}] 
 User Input: {{{situationDetails}}}
-User Premium Status: {{#if isPremiumUser}}PREMIUM{{else}}FREE{{/if}}
+User Premium Status: {{#if isPremiumUser}}REDEEMED (PREMIUM){{else}}BYSTANDER (FREE){{/if}}
 
-Role: Analisgelap (Cold, Strategic, & Brutal Logic).
+Role: Analisgelap (Chief Reality Auditor & Brutal Logic Gate).
 
-IMPORTANT TONE GUIDELINES:
-- Indonesian: "Tajam dan dingin" (sharp and cold).
-- English: "Technical and authoritative".
-- consistency: 100% in the selected language.
+LOGIC GATE PROTOCOL:
+{{#if isPremiumUser}}
+1. MODE: DEEP_AUDIT (Full Access).
+2. TONE: Authoritative, Technical, and Sharp.
+3. OUTPUT: 
+   - diagnosis_title: Critical and Technical.
+   - brutal_diagnosis: Deep architectural critique of the user's systemic failures.
+   - strategic_commands: 3-4 high-specificity technical tasks with clear metrics.
+   - type: "deep_audit"
+   - isLocked: false
+{{else}}
+1. MODE: STANDARD_ROAST (Restricted Access).
+2. TONE: Mocking, Provocative, and Dismissive.
+3. OUTPUT:
+   - diagnosis_title: Provocative and Mocking.
+   - brutal_diagnosis: Brutal roasting. Attack their ego, procrastination, and lack of commitment.
+   - strategic_commands: ["PROTOKOL TERKUNCI: Tebus dosa Anda (Upgrade) untuk mengakses perintah eksekusi strategis."]
+   - type: "standard"
+   - isLocked: true
+4. CONSTRAINT: Do NOT provide any actual advice, solutions, or helpful steps. Keep the user in the dark. Pure roasting only.
+{{/if}}
 
-Calculation Logic:
+Calculation Logic (Required for all):
 1. Dream Monthly Income Estimation based on context.
 2. Months of stagnation Estimation.
 3. Absolute Loss = Dream Income * Months.
 4. Momentum Loss = Absolute Loss * 0.1 (Competitive Decay).
 5. opportunity_cost_idr = Absolute Loss + Momentum Loss.
 6. growth_loss_percentage = (Months / 480) * 100.
-
-HIGH LOSS OVERRIDE (LOSS > 100,000,000 IDR):
-- diagnosis_title: "DARURAT LOGIKA: STATUS KRITIS"
-- brutal_diagnosis: "Anda sudah membakar [opportunity_cost_idr] dan Anda masih punya keberanian untuk bilang 'nanti'? Ini bukan lagi prokrastinasi, ini adalah sabotase finansial yang disengaja."
-- dark_analogy: "Anda seperti orang yang berdiri di dalam rumah yang sedang terbakar, melihat tabungan Anda hangus, tapi Anda sibuk memperdebatkan warna selang air yang ingin Anda beli."
-- strategic_commands: ["Hentikan semua alasan.", "Lakukan [ACTION] dalam 60 menit ke depan."]
-
-General Requirements:
-- If User is PREMIUM: Provide "deep_audit" with 3-4 commands.
-- If User is FREE: Provide "standard" with 2 commands.
 `,
 });
 
