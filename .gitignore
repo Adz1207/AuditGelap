@@ -21,3 +21,10 @@ yarn-error.log*
 # System files
 .DS_Store
 Thumbs.db
+.env
+.env
+.env.local
+.env.production
+.next/
+out/
+.netlify/
