@@ -32,7 +32,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Bad Request: User ID missing in order_id' }, { status: 400 });
     }
 
-    const { firestore } = initializeFirebase();
+    const firebaseServices = initializeFirebase();
+    if (!firebaseServices) {
+      console.error("[WEBHOOK] Firebase initialization failed.");
+      return NextResponse.json({ message: 'Internal Server Error: Database Unavailable' }, { status: 500 });
+    }
+    const { firestore } = firebaseServices;
     const userRef = doc(firestore, 'users', userId);
     
     const transactionStatus = data.transaction_status;
