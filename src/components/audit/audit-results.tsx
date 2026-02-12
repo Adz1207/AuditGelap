@@ -2,13 +2,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck, Lock, RefreshCcw, Loader2 } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Terminal, CheckCircle2, Globe, ShieldCheck, Lock, RefreshCcw, Loader2, Share2, X } from 'lucide-react';
 import { type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import TypewriterEffect from '@/components/ui/typewriter-effect';
 import { RedemptionCounter } from './redemption-counter';
 import { Button } from '@/components/ui/button';
 import { BlurredSolution } from './blurred-solution';
 import { useRouter } from 'next/navigation';
+import { ResultCard } from './result-card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface AuditResultsProps {
   data: AuditOutput;
@@ -20,6 +22,7 @@ interface AuditResultsProps {
 export function AuditResults({ data, lang, onRefresh, isRefreshing }: AuditResultsProps) {
   const [time, setTime] = useState<string | null>(null);
   const [isResolved, setIsResolved] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,9 +50,20 @@ export function AuditResults({ data, lang, onRefresh, isRefreshing }: AuditResul
             System Audit Log // {time || 'INITIALIZING...'}
           </span>
         </div>
-        <div className="flex items-center gap-1 text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10">
-          <Globe size={12} className="text-muted-foreground" />
-          {langCode}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowShareCard(true)}
+            className="h-8 text-[10px] uppercase font-bold text-zinc-500 hover:text-white"
+          >
+            <Share2 size={14} className="mr-2" />
+            Share Result
+          </Button>
+          <div className="flex items-center gap-1 text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10 h-8">
+            <Globe size={12} className="text-muted-foreground" />
+            {langCode}
+          </div>
         </div>
       </div>
 
@@ -165,6 +179,33 @@ export function AuditResults({ data, lang, onRefresh, isRefreshing }: AuditResul
       <div className="mt-8 pt-4 border-t border-white/10 text-[9px] text-muted-foreground text-center uppercase tracking-[0.2em]">
         Auditgelap Protocol v1.0 // No excuses tolerated.
       </div>
+
+      {/* Share Card Dialog */}
+      <Dialog open={showShareCard} onOpenChange={setShowShareCard}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 flex flex-col items-center p-0 overflow-hidden max-w-[400px]">
+          <DialogHeader className="p-4 w-full bg-zinc-900 border-b border-zinc-800">
+            <DialogTitle className="text-xs uppercase tracking-widest text-zinc-400 font-bold flex justify-between items-center w-full">
+              Reality Snapshot
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <ResultCard data={data} />
+          </div>
+
+          <div className="p-4 w-full bg-zinc-900/50 border-t border-zinc-800 flex flex-col gap-2">
+            <p className="text-[9px] text-zinc-500 uppercase text-center mb-2">
+              Ambil screenshot untuk mempermalukan diri sendiri secara publik.
+            </p>
+            <Button 
+              onClick={() => setShowShareCard(false)}
+              className="w-full bg-white text-black font-bold uppercase text-[10px] tracking-widest h-10"
+            >
+              Close Interface
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
