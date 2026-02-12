@@ -1,8 +1,3 @@
-# Firebase Studio
-
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
 # 💀 AUDITGELAP: Protokol Akuntabilitas Radikal
 
 > **"Kebenaran sebelum kenyamanan. Eksekusi atau akui kegagalan Anda secara finansial."**
@@ -14,26 +9,38 @@ To get started, take a look at src/app/page.tsx.
 
 ## 🛠️ FITUR UTAMA
 - **Brutal Logic Audit:** AI-driven diagnosis yang membedah rencana Anda dan mencari celah kemalasan terselubung.
-- **Opportunity Cost Engine:** Kalkulasi otomatis kerugian aset akibat penundaan waktu.
+- **Opportunity Cost Engine:** Kalkulasi otomatis kerugian aset akibat penundaan waktu secara real-time.
 - **Arsip Dosa (The Hall of Shame):** Rekam jejak permanen setiap deadline yang Anda langgar. Anda tidak bisa menghapusnya.
-- **The Punisher Protocol:** Notifikasi agresif dan Weekly Roast Email untuk menghancurkan mood malas di Senin pagi.
+- **The Punisher Protocol:** Notifikasi agresif dan Weekly Roast Intelligence untuk menghancurkan mood malas.
+- **Execution Verifier:** Audit integritas berbasis data untuk setiap klaim penyelesaian tugas.
 
 ## 🚀 TEKNOLOGI (THE STACK)
-Sistem ini dibangun di atas infrastruktur yang dingin dan efisien:
-- **Frontend:** React + Tailwind CSS (High-End Minimalist UI)
-- **Intelligence:** Gemini 3 Flash (The Dark Analyst)
-- **Backend:** Firebase (Firestore & Cloud Functions)
-- **Payment:** Midtrans API (The Execution Gate)
-- **Deployment:** Vercel
+- **Frontend:** Next.js 15 + Tailwind CSS + ShadCN UI
+- **Intelligence:** Genkit + Gemini 2.5 Flash (The Dark Analyst)
+- **Backend:** Firebase Firestore & Auth
+- **Payment:** Midtrans Snap SDK (Protokol Penebusan Dosa)
 
-## ⚠️ PERINGATAN KEAMANAN
-Proyek ini menggunakan variabel lingkungan (`.env`) untuk mengelola rahasia negara (API Keys). 
-**JANGAN PERNAH** mengunggah file `.env` ke repository ini. Gunakan `.env.example` sebagai referensi.
+## ⚙️ KONFIGURASI MANDIRI (MIDTRANS)
+Untuk mengaktifkan fitur pembayaran "Penebusan Dosa", Anda wajib mengatur API Keys Midtrans:
 
-## ⚙️ INSTALASI LOKAL
-Jika Anda cukup berani untuk menjalankan mesin ini di mesin Anda sendiri:
+1. Salin file `.env.example` menjadi `.env`.
+2. Masukkan `MIDTRANS_SERVER_KEY` dan `MIDTRANS_CLIENT_KEY` dari dashboard Midtrans Sandbox Anda.
+3. Restart server pengembangan.
 
+```bash
+cp .env.example .env
+# Edit .env dengan key Anda
+```
+
+## ⚠️ PERINGATAN
+Sistem ini menggunakan **Client-Side SDK** untuk semua operasi database. Keamanan diatur secara ketat melalui **Firestore Security Rules**. Jangan memodifikasi aturan tersebut tanpa memahami dampaknya terhadap integritas protokol.
+
+## 🛠️ INSTALASI LOKAL
 1. Clone repository:
    ```bash
-      git clone [https://github.com/USERNAME/auditgelap.git](https://github.com/Adz1207/auditgelap.git)
-# AuditGelap
+   git clone https://github.com/Adz1207/auditgelap.git
+   ```
+2. Jalankan development server:
+   ```bash
+   npm run dev
+   ```
