@@ -1,10 +1,10 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { AuditForm } from './audit-form';
 import { AuditResults } from './audit-results';
 import { AuditScanning } from './audit-scanning';
+import { AuditError } from './audit-error';
 import { generateAuditAndInsights, type AuditOutput } from '@/ai/flows/generate-audit-and-insights';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -16,6 +16,7 @@ export function AuditContainer() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditOutput | null>(null);
   const [lastInput, setLastInput] = useState<any>(null);
   const [langUsed, setLangUsed] = useState<'Indonesian' | 'English'>('Indonesian');
@@ -34,6 +35,7 @@ export function AuditContainer() {
   }) => {
     setLoading(true);
     setAuditData(null);
+    setError(null);
     setLangUsed(formData.lang);
     setLastInput(formData);
     
@@ -116,13 +118,9 @@ export function AuditContainer() {
           });
         }
       }
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "System Failure",
-        description: "Gagal menghubungkan ke modul intelijen AI. Coba lagi.",
-      });
+    } catch (err) {
+      console.error(err);
+      setError("SYSTEM_OVERLOAD");
     } finally {
       setLoading(false);
     }
@@ -152,9 +150,11 @@ export function AuditContainer() {
 
   return (
     <div className="space-y-12">
-      {!auditData && !loading && <AuditForm onSubmit={handleAudit} isLoading={loading} />}
+      {!auditData && !loading && !error && <AuditForm onSubmit={handleAudit} isLoading={loading} />}
       
       {loading && <AuditScanning />}
+
+      {error && <AuditError onRetry={() => setError(null)} />}
 
       {auditData && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -169,6 +169,7 @@ export function AuditContainer() {
               onClick={() => {
                 setAuditData(null);
                 setLastInput(null);
+                setError(null);
               }}
               className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-[0.3em] transition-colors"
             >
