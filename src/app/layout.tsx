@@ -31,7 +31,7 @@ export default function RootLayout({
           {/* Midtrans Snap Script - Loaded dynamically from environment */}
           <Script 
             src={process.env.NEXT_PUBLIC_MIDTRANS_APP_URL || "https://app.sandbox.midtrans.com/snap/snap.js"} 
-            data-client-key={process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-YOUR_KEY"}
+            data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "SB-Mid-client-YOUR_KEY"}
             strategy="lazyOnload"
           />
         </FirebaseClientProvider>

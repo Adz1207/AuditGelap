@@ -1,7 +1,7 @@
 
 'use server';
 
-import { snap } from '@/lib/midtrans';
+import { getMidtransClient } from '@/lib/midtrans';
 
 export interface CreateTransactionInput {
   user: {
@@ -22,6 +22,7 @@ export interface CreateTransactionInput {
  */
 export async function createPaymentTransaction(input: CreateTransactionInput) {
   const { user, plan } = input;
+  const snap = getMidtransClient();
 
   // Order ID format: "AUDIT-{userId}-{timestamp}" for easy parsing in webhooks
   const orderId = `AUDIT-${user.id}-${Date.now()}`;
