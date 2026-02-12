@@ -3,6 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { LiveStatFooter } from '@/components/layout/live-stat-footer';
 
 export const metadata: Metadata = {
   title: 'Auditgelap | Realitas Pahit Masa Depan Anda',
@@ -25,6 +26,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <div className="scan-line" />
           {children}
+          <LiveStatFooter />
           <Toaster />
           {/* Midtrans Snap Script - Loaded dynamically from environment */}
           <Script 

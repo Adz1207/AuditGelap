@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { ArrowRight, ShieldAlert } from "lucide-react";
 import { MiniLossCalculator } from '@/components/audit/mini-loss-calculator';
@@ -65,14 +64,7 @@ export default function LandingPage() {
         <PricingTable />
       </div>
 
-      <div className="pb-24" />
-
-      {/* Footer Ticker */}
-      <div className="fixed bottom-0 w-full border-t border-white/5 bg-black/80 backdrop-blur-md py-2 overflow-hidden whitespace-nowrap z-50">
-        <div className="inline-block animate-marquee text-[10px] text-muted-foreground uppercase tracking-widest">
-          TOTAL OPPORTUNITY COST USER MINGGU INI: RP 1.240.500.000 — JANGAN JADI BAGIAN DARI STATISTIK INI — EKSEKUSI SEKARANG — TOTAL OPPORTUNITY COST USER MINGGU INI: RP 1.240.500.000 — JANGAN JADI BAGIAN DARI STATISTIK INI — EKSEKUSI SEKARANG — 
-        </div>
-      </div>
+      <div className="pb-32" />
     </main>
   );
 }
